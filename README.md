@@ -14,6 +14,7 @@ Reskinner is a Python 3 plugin for PySimpleGUI's Tkinter port which enables chan
 ```python
 import PySimpleGUI as sg
 from PSG_Reskinner import reskin
+from random import choice as rc
 
 window_layout = [
         [sg.Text('Hello! You are currently running Reskinner instead of importing it.')],
