@@ -1,10 +1,10 @@
 # Reskinner Plugin for PySimpleGUI
 
+![Demo GIF](https://github.com/definite-d/psg_reskinner/blob/dev/res/demo.gif)
+
 ````text
 pip install PSG-Reskinner
 ````
-
-https://github.com/definite-d/psg_reskinner.
 
 ## What's Reskinner?
 Reskinner is a Python 3 plugin for PySimpleGUI's Tkinter port which enables changing the theme of a PySimpleGUI window on the fly without the need for re-instantiating the window.
