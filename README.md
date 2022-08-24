@@ -63,8 +63,8 @@ I didn't want it to conflict with the built-in conventions of `theme` and `look_
 ## Standards
 Reskinner is:
 
- -[X] built using Python 3.7 (in PyCharm),
+ - [X] built using Python 3.7 (in PyCharm),
 
- -[X] fully PEP-8 compliant,
+ - [X] fully PEP-8 compliant,
 
- -[X] distributed under the OSI-Approved MIT License.
+ - [X] distributed under the OSI-Approved MIT License.
