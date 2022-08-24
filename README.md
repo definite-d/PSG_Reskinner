@@ -1,10 +1,18 @@
 # Reskinner Plugin for PySimpleGUI
 
-![Demo GIF](https://github.com/definite-d/psg_reskinner/blob/dev/res/demo.gif)
+[![Downloads](https://static.pepy.tech/personalized-badge/psg-reskinner?period=total&units=international_system&left_color=grey&right_color=green&left_text=Downloads)](https://pepy.tech/project/psg-reskinner)
+[![GitHub issues](https://img.shields.io/github/issues/definite-d/psg_reskinner)](https://github.com/definite-d/psg_reskinner/issues)
+![GitHub forks](https://img.shields.io/github/forks/definite-d/psg_reskinner?logo=github&style=flat)
+[![GitHub stars](https://img.shields.io/github/stars/definite-d/psg_reskinner)](https://github.com/definite-d/psg_reskinner/stargazers)
+![PyPi Version](https://img.shields.io/pypi/v/psg-reskinner?style=flat)
+![Python Versions](https://img.shields.io/pypi/pyversions/psg-reskinner.svg?style=flat&logo=python])
+![License](https://img.shields.io/pypi/l/psg-reskinner.svg?style=flat&version=latest)
 
 ````text
 pip install PSG-Reskinner
 ````
+
+![Demo GIF](https://github.com/definite-d/psg_reskinner/blob/main/res/demo.gif)
 
 ## What's Reskinner?
 Reskinner is a Python 3 plugin for PySimpleGUI's Tkinter port which enables changing the theme of a PySimpleGUI window on the fly without the need for re-instantiating the window.
@@ -12,19 +20,18 @@ Reskinner is a Python 3 plugin for PySimpleGUI's Tkinter port which enables chan
 ## Example Usage (Demo)
 
 ```python
-import PySimpleGUI as sg
-from PSG_Reskinner import reskin
-from random import choice as rc
+    from PSG_Reskinner import reskin
+    from PySimpleGUI import Window, Text, Button, DropDown, theme_list, TIMEOUT_KEY
 
-window_layout = [
-        [sg.Text('Hello! You are currently running Reskinner instead of importing it.')],
-        [sg.Text('Clicking the button will change the theme to the one specified.')],
-        [sg.Text('Or do nothing. The theme will change every few seconds')],
-        [sg.DropDown(values=sg.theme_list(), default_value='DarkBlue3', k='new_theme')],
-        [sg.Button('Change Theme', k='change')],
+    window_layout = [
+        [Text('Hello! You are currently running Reskinner instead of importing it.')],
+        [Text('Clicking the button will change the theme to the one specified.')],
+        [Text('Or do nothing. The theme will change every few seconds')],
+        [DropDown(values=theme_list(), default_value='DarkBlue3', k='new_theme')],
+        [Button('Change Theme', k='change')]
     ]
 
-    window = sg.Window('Reskinner Demo', window_layout, element_justification='center')
+    window = Window('Reskinner Demo', window_layout, element_justification='center')
 
     while True:
 
@@ -37,9 +44,9 @@ window_layout = [
         if e == 'change':
             reskin(window, v['new_theme'])
 
-        else:
-            reskin(window, rc(sg.theme_list()))
-```
+        elif e == TIMEOUT_KEY:
+            reskin(window)
+``` 
 
 ## How does it work?
 
@@ -56,10 +63,8 @@ I didn't want it to conflict with the built-in conventions of `theme` and `look_
 ## Standards
 Reskinner is:
 
- * lightweight (about 4KB in size)
+ -[X] built using Python 3.7 (in PyCharm),
 
- * built using Python 3.7 (in PyCharm),
+ -[X] fully PEP-8 compliant,
 
- * fully PEP-8 compliant,
-
- * distributed under the OSI-Approved MIT License.
+ -[X] distributed under the OSI-Approved MIT License.
