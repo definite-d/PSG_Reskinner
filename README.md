@@ -20,32 +20,41 @@ Reskinner is a Python 3 plugin for PySimpleGUI's Tkinter port which enables chan
 ## Example Usage (Demo)
 
 ```python
-    from PSG_Reskinner import reskin
-    from PySimpleGUI import Window, Text, Button, DropDown, theme_list, TIMEOUT_KEY
+# Reskinner Version 2
 
-    window_layout = [
-        [Text('Hello! You are currently running Reskinner instead of importing it.')],
-        [Text('Clicking the button will change the theme to the one specified.')],
-        [Text('Or do nothing. The theme will change every few seconds')],
-        [DropDown(values=theme_list(), default_value='DarkBlue3', k='new_theme')],
-        [Button('Change Theme', k='change')]
-    ]
+from psg_reskinner import reskin, animated_reskin, __version__
+from PySimpleGUI import Window, Text, Button, DropDown, Push, theme_list, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
+from random import choice as rc
 
-    window = Window('Reskinner Demo', window_layout, element_justification='center')
+window_layout = [
+    [Text('Hello!', font=('Helvetica', 20))],
+    [Text('You are currently running Reskinner instead of importing it.')],
+    [Text('Clicking the button will change the theme to the one specified.')],
+    [Text('Or do nothing. The theme will change every few seconds')],
+    [DropDown(values=theme_list(), default_value='DarkBlue3', k='new_theme')],
+    [Button('Change Theme', k='change')],
+    [Text(f'Reskinner v{__version__}', font=('Helvetica', 8), pad=(0, 0)), Push()],
+]
 
-    while True:
+window = Window('Reskinner Demo', window_layout, element_justification='center')
 
-        e, v = window.Read(timeout=3000)
+while True:
 
-        if e in (None, 'Exit'):
-            window.Close()
-            break
+    e, v = window.Read(timeout=2000)
 
-        if e == 'change':
-            reskin(window, v['new_theme'])
+    if e in (None, 'Exit'):
+        window.Close()
+        break
 
-        elif e == TIMEOUT_KEY:
-            reskin(window)
+    if e == 'change':
+        reskin(window, v['new_theme'], theme, LOOK_AND_FEEL_TABLE)
+
+    elif e == TIMEOUT_KEY:
+        '''reskin(window, rc(theme_list()), theme, LOOK_AND_FEEL_TABLE)'''
+        animated_reskin(window=window,
+                        new_theme=rc(theme_list()),
+                        theme_function=theme,
+                        lf_table=LOOK_AND_FEEL_TABLE)
 ``` 
 
 ## How does it work?
@@ -58,13 +67,13 @@ Like [Unda](https://github.com/definite-d/unda), I created Reskinner to be a par
 Development began on Monday 15th August 2022.
 
 ## Why is it called Reskinner?
-I didn't want it to conflict with the built-in conventions of `theme` and `look_and_feel` that PySimpleGUI has.
+I didn't want it to go against the built-in conventions of `theme` and `look_and_feel` that PySimpleGUI has.
 
 ## Standards
 Reskinner is:
 
- - [X] built using Python 3.7 (in PyCharm),
+ -[X] built using Python 3.7 (in PyCharm),
 
- - [X] fully PEP-8 compliant,
+ -[X] fully PEP-8 compliant,
 
- - [X] distributed under the OSI-Approved MIT License.
+ -[X] distributed under the OSI-Approved MIT License.
