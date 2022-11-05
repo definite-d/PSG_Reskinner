@@ -27,17 +27,18 @@ SOFTWARE.
 
 
 # VERSIONING
-__version__ = '2.2.0'
+__version__ = '2.2.12'
 
 
 # IMPORTS
 from PySimpleGUI.PySimpleGUI import Window, theme_text_color, theme_slider_color, theme_progress_bar_color, \
     theme_button_color, theme_background_color, theme_input_background_color, theme, theme_input_text_color, \
-    theme_text_element_background_color, theme_add_new, ttk_part_mapping_dict, _rgb_to_hsl, LOOK_AND_FEEL_TABLE, \
-    COLOR_SYSTEM_DEFAULT
-from colour import web2rgb, hsl2web, Color
+    theme_text_element_background_color, theme_add_new, ttk_part_mapping_dict, _rgb_to_hsl, \
+    LOOK_AND_FEEL_TABLE, COLOR_SYSTEM_DEFAULT, TITLEBAR_METADATA_MARKER, TITLEBAR_TEXT_KEY, TITLEBAR_IMAGE_KEY, \
+    TITLEBAR_MINIMIZE_KEY, TITLEBAR_MAXIMIZE_KEY, TITLEBAR_CLOSE_KEY, TITLEBAR_DO_NOT_USE_AN_ICON
+from colour import web2rgb, hsl2web, Color, COLOR_NAME_TO_RGB
+from datetime import timedelta, datetime as dt
 from random import choice as rc
-from time import sleep, time
 from _tkinter import TclError
 from tkinter.ttk import Style
 from typing import Callable, Union
@@ -60,6 +61,7 @@ NON_GENERIC_ELEMENTS = [
 ]
 WINDOW_THEME_MAP = {}
 DISABLED_COLOR = '#A3A3A3'
+ALTER_MENU_ACTIVE_COLORS = True
 
 
 # ERROR CLASS
@@ -220,7 +222,6 @@ def reskin(
     """
     # scope_theme = theme()
     # Handle parameters
-    ''' print(f'New theme: {new_theme}') '''
     new_theme = new_theme if new_theme is not None else rc(lf_table)
     exempt_element_keys = exempt_element_keys if exempt_element_keys is not None else []
     if target_element_keys is not None and exempt_element_keys is not None:
@@ -265,6 +266,25 @@ def reskin(
                     if styler.configure(style_name) is not None:  # If we've stumbled upon a valid style:
                         _configure_ttk_scrollbar_style(style_name, styler)
 
+            # Custom Titlebar ___________________________________________________________________________________
+            # Container Columns. A little duck-type hack is used to identify the expanded column.
+            if (element.metadata == TITLEBAR_METADATA_MARKER) or \
+                    (getattr(element, 'Grab', False) and getattr(element, 'expand_x', False) and el == 'column'):
+                element.Widget.configure(background=theme_button_color()[1])
+                if element.ParentRowFrame is not None:
+                    element.ParentRowFrame.configure(background=theme_button_color()[1])
+            # Title
+            if (element.key in [
+                TITLEBAR_TEXT_KEY,
+                TITLEBAR_MAXIMIZE_KEY,
+                TITLEBAR_MINIMIZE_KEY,
+                TITLEBAR_CLOSE_KEY,
+            ]) or (TITLEBAR_DO_NOT_USE_AN_ICON and element.key == TITLEBAR_IMAGE_KEY):
+                element.Widget.configure(foreground=theme_button_color()[0], background=theme_button_color()[1])
+                if element.ParentRowFrame is not None:
+                    element.ParentRowFrame.configure(background=theme_button_color()[1])
+
+            # Other elements
             if el in ('text', 'statusbar'):
                 text_fg = element.Widget.cget('foreground')
                 text_bg = element.Widget.cget('background')
@@ -273,15 +293,24 @@ def reskin(
                     element.TextColor = theme_text_color()
                 if _check_for_honors(text_bg, old_theme_dict['BACKGROUND'], honor_previous):
                     element.Widget.configure(background=theme_text_element_background_color())
+            elif el == 'frame':
+                element.Widget.configure(foreground=theme_text_color())
+            elif el == 'menu':
+                element.BackgroundColor = theme_input_background_color()
+                element.TextColor = theme_input_text_color()
+                menudef = element.MenuDefinition
+                element.update(menu_definition=menudef)
             elif el == 'sizegrip':
                 sizegrip_style = element.Widget.cget('style')
                 styler.configure(sizegrip_style, background=theme_background_color())
             elif el == 'optionmenu':
                 element.Widget['menu'].configure(foreground=theme_input_text_color(),
-                                                 background=theme_input_background_color(),
-                                                 # activeforeground=theme_input_background_color(),
-                                                 # activebackground=theme_input_text_color(),
-                                                 )
+                                                 background=theme_input_background_color(),)
+                if ALTER_MENU_ACTIVE_COLORS:
+                    element.Widget['menu'].configure(
+                                                 activeforeground=theme_input_background_color(),
+                                                 activebackground=theme_input_text_color(),
+                    )
                 element.Widget.configure(foreground=theme_input_text_color(),
                                          background=theme_input_background_color(),
                                          activeforeground=theme_input_background_color(),
@@ -298,7 +327,7 @@ def reskin(
                                          selectbackground=theme_input_text_color())
             elif el == 'slider':
                 element.Widget.configure(foreground=theme_text_color(), troughcolor=theme_slider_color())
-            elif el == 'button' and element.ButtonColor == (old_theme_dict['BUTTON'][0], old_theme_dict['BUTTON'][1]):
+            elif el == 'button':
                 element.ButtonColor = theme_button_color()
                 # For regular Tk buttons
                 if 'ttk' not in str(type(element.TKButton)).lower():
@@ -326,10 +355,6 @@ def reskin(
                 styler.configure(style_name, background=theme_progress_bar_color()[1],
                                  troughcolor=theme_progress_bar_color()[0])
             elif el == 'buttonmenu':
-                element.Widget.configure(background=theme_button_color()[1], foreground=theme_button_color()[0],
-                                         activebackground=theme_button_color()[0],
-                                         activeforeground=theme_button_color()[1])
-                element.TKMenu.configure(background=theme_input_background_color(), foreground=theme_input_text_color())
                 menudef = element.MenuDefinition
                 element.BackgroundColor = theme_input_background_color()
                 element.TextColor = theme_input_text_color()
@@ -421,6 +446,7 @@ def animated_reskin(
         new_theme: str,
         theme_function: Callable,
         lf_table: dict,
+        duration: int = 3000,
         set_future: bool = False,
         exempt_element_keys: list = None,
         target_element_keys: list = None,
@@ -436,6 +462,7 @@ def animated_reskin(
     :param new_theme: The name of the new theme, as you would pass it to your `theme()` call.
     :param theme_function: The PySimpleGUI `theme()` function object itself. Pass it without parentheses.
     :param lf_table: The `LOOK_AND_FEEL_TABLE` constant from your PySimpleGUI import.
+    :param duration: Amount of time in milliseconds to spend for the entire animation. Defaults to 3000 milliseconds.
     :param set_future: False by default. If `True`, future windows will also use the new theme.
     :param exempt_element_keys: A list of element keys which will be excluded from the process if specified. Cannot be
     used alongside `target_element_keys`.
@@ -445,55 +472,59 @@ def animated_reskin(
     to a custom one.
     :return: None
     """
-    anim_duration = 3
-    reference_time = time()
-    reskin(window, theme_function(), theme, lf_table)
-    period = time() - reference_time
-    frames = int(round(((anim_duration/period)/4), 0))
-    print(new_theme)
-    custom_lf_table = dict()
-    custom_lf_table[theme_function()] = lf_table[theme_function()]
-    custom_lf_table[new_theme] = lf_table[new_theme]
-    flat_old_theme_dict: dict = _flatten_dict(lf_table[theme_function()])
-    flat_new_theme_dict: dict = _flatten_dict(lf_table[new_theme])
-    for frame in range(2, frames, min(frames, int(frames * anim_duration * period))):
-        frame_dict: dict = {}
-        for (key, value) in flat_old_theme_dict.items():
-            if isinstance(value, str):
-                try:
-                    frame_dict[key] = \
-                    list(Color(flat_old_theme_dict[key]).range_to(flat_new_theme_dict[key], frames))[
-                        frame - 1].get_web()
-                except (ValueError, KeyError):
-                    pass
-            if isinstance(value, int):
-                frame_dict[key] = \
-                    int([value * (val/frames) for val in range(1, frames + 1)][
-                            frame])
-        frame_theme_dict = {
-            'BACKGROUND': frame_dict['BACKGROUND'],
-            'TEXT': frame_dict['TEXT'],
-            'INPUT': frame_dict['INPUT'],
-            'SCROLL': frame_dict['SCROLL'],
-            'TEXT_INPUT': frame_dict['TEXT_INPUT'],
-            'BUTTON': (frame_dict['BUTTON_0'], frame_dict['BUTTON_1']),
-            'PROGRESS': (frame_dict['PROGRESS_0'], frame_dict['PROGRESS_1']),
-            'BORDER': frame_dict['BORDER'],
-            'SLIDER_DEPTH': frame_dict['SLIDER_DEPTH'],
-            'PROGRESS_DEPTH': frame_dict['PROGRESS_DEPTH'],
-        }
-        if frame != frames:
-            frame_theme = f'{new_theme}_f{frame}' if frame != frames else new_theme
-            custom_lf_table[frame_theme] = frame_theme_dict.copy()
-            reskin(window, frame_theme, theme_function, custom_lf_table, set_future, exempt_element_keys,
-                   target_element_keys, honor_previous)
-            del LOOK_AND_FEEL_TABLE[frame_theme]
-    sleep(anim_duration/(frames*0.3))
-    reskin(window, new_theme, theme_function, custom_lf_table, set_future, exempt_element_keys,
-           target_element_keys, honor_previous)
-    WINDOW_THEME_MAP[window] = (new_theme, lf_table[new_theme])
-    del custom_lf_table
-    pass
+    old_themedict = lf_table[theme_function()]
+    new_themedict = lf_table[new_theme]
+    # micro = float(str(timedelta(milliseconds=duration)).rsplit(':', 1)[1])
+    call_time = dt.now()
+    end_time = call_time + timedelta(milliseconds=duration)
+    colors = {}
+    for key in old_themedict:
+        if key in new_themedict:
+            if isinstance(old_themedict[key], str) \
+                    and (old_themedict[key].startswith('#') or old_themedict[key] in COLOR_NAME_TO_RGB):
+                end = Color(new_themedict[key])
+                start = Color(old_themedict[key])
+                colors[key] = (start, end)
+            if isinstance(old_themedict[key], tuple) or isinstance(old_themedict[key], list):
+                for pos, col in enumerate(old_themedict[key]):
+                    if isinstance(col, str) \
+                            and (col.startswith('#') or col in COLOR_NAME_TO_RGB):
+                        try:
+                            end = Color(new_themedict[key][pos])
+                        except IndexError:
+                            continue
+                        start = Color(col)
+                        colors[f'{key}___@{pos}'] = (start, end)
+    while dt.now() <= end_time:
+        interdict: dict = new_themedict.copy()
+        delta = (float(str((dt.now()-call_time)).rsplit(':', 1)[1])*1000)/duration
+        for k, (a, b) in colors.items():
+            try:
+                current = Color()
+                current.set_red((a.get_red() + ((b.get_red()-a.get_red()) * delta)))
+                current.set_green((a.get_green() + ((b.get_green()-a.get_green()) * delta)))
+                current.set_blue((a.get_blue() + ((b.get_blue()-a.get_blue()) * delta)))
+            except ValueError:
+                continue
+            if '___@' not in k:  # Nice and simple; a single-color theme entry.
+                interdict[k] = current.get_hex()
+                continue
+            else:  # A tuple-style theme entry. The intermediary themedict uses lists instead.
+                k, pos = k.split('___@')
+                interdict[k] = [] if not isinstance(interdict[k], list) else interdict[k]
+                interdict[k].insert(int(pos), current.get_hex())
+        lf_table[f'___{new_theme}@reskinneranimation'] = interdict
+        try:
+            reskin(window, f'___{new_theme}@reskinneranimation', theme_function, lf_table, set_future,
+                   exempt_element_keys, target_element_keys, honor_previous)
+        except TclError:  # The window has been closed.
+            pass
+    try:
+        reskin(window, new_theme, theme_function, lf_table, set_future, exempt_element_keys,
+               target_element_keys, honor_previous)
+    except TclError:  # The window has been closed.
+        pass
+    del lf_table[f'___{new_theme}@reskinneranimation']
 
 
 def toggle_transparency(window: Window) -> None:
@@ -518,16 +549,16 @@ safethemes = _safe_theme_list(LOOK_AND_FEEL_TABLE)
 
 def main():
     # from psg_reskinner import reskin, animated_reskin
-    from PySimpleGUI import Window, Text, Button, DropDown, Push, theme_list, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
+    from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme_list, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
     # from random import choice as rc
 
     window_layout = [
+        [Titlebar('Reskinner Demo')],
         [Text('Hello!', font=('Helvetica', 20))],
         [Text('You are currently running Reskinner instead of importing it.')],
-        [Text('Clicking the button will change the theme to the one specified.')],
-        [Text('Or do nothing. The theme will change every few seconds')],
-        [DropDown(values=theme_list(), default_value='DarkBlue3', k='new_theme')],
-        [Button('Change Theme', k='change')],
+        [Text('The theme of this window changes every 3 seconds.')],
+        [Text('Changing to:')],
+        [Button('DarkBlue3', k='ctheme', font=('Helvetica', 16))],
         [Text(f'Reskinner v{__version__}', font=('Helvetica', 8), pad=(0, 0)), Push()],
     ]
 
@@ -541,13 +572,12 @@ def main():
             window.Close()
             break
 
-        if e == 'change':
-            reskin(window, v['new_theme'], theme, LOOK_AND_FEEL_TABLE)
-
         elif e == TIMEOUT_KEY:
             '''reskin(window, rc(theme_list()), theme, LOOK_AND_FEEL_TABLE)'''
+            new = rc(safethemes)
+            window['ctheme'].update(new)
             animated_reskin(window=window,
-                            new_theme=rc(safethemes),
+                            new_theme=new,
                             theme_function=theme,
                             lf_table=LOOK_AND_FEEL_TABLE)
 
