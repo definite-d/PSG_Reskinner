@@ -8,11 +8,13 @@
 ![Python Versions](https://img.shields.io/pypi/pyversions/psg-reskinner.svg?style=flat&logo=python])
 ![License](https://img.shields.io/pypi/l/psg-reskinner.svg?style=flat&version=latest)
 
-````text
+````shell
 pip install PSG-Reskinner
 ````
 
-![Demo GIF](https://github.com/definite-d/psg_reskinner/blob/main/res/demo.gif)
+<p align="center"> 
+    <img width="353" height="252" src="https://github.com/definite-d/psg_reskinner/blob/main/res/demo.gif">
+</p>
 
 ## What's Reskinner?
 Reskinner is a Python 3 plugin for PySimpleGUI's Tkinter port which enables changing the theme of a PySimpleGUI window on the fly without the need for re-instantiating the window.
@@ -23,16 +25,16 @@ Reskinner is a Python 3 plugin for PySimpleGUI's Tkinter port which enables chan
 # Reskinner Version 2
 
 from psg_reskinner import reskin, animated_reskin, __version__
-from PySimpleGUI import Window, Text, Button, DropDown, Push, theme_list, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
+from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme_list, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
 from random import choice as rc
 
 window_layout = [
+    [Titlebar('Reskinner Demo')],
     [Text('Hello!', font=('Helvetica', 20))],
     [Text('You are currently running Reskinner instead of importing it.')],
-    [Text('Clicking the button will change the theme to the one specified.')],
-    [Text('Or do nothing. The theme will change every few seconds')],
-    [DropDown(values=theme_list(), default_value='DarkBlue3', k='new_theme')],
-    [Button('Change Theme', k='change')],
+    [Text('The theme of this window changes every 3 seconds.')],
+    [Text('Changing to:')],
+    [Button('DarkBlue3', k='ctheme', font=('Helvetica', 16))],
     [Text(f'Reskinner v{__version__}', font=('Helvetica', 8), pad=(0, 0)), Push()],
 ]
 
@@ -46,13 +48,12 @@ while True:
         window.Close()
         break
 
-    if e == 'change':
-        reskin(window, v['new_theme'], theme, LOOK_AND_FEEL_TABLE)
-
     elif e == TIMEOUT_KEY:
         '''reskin(window, rc(theme_list()), theme, LOOK_AND_FEEL_TABLE)'''
+        new = rc(theme_list())
+        window['ctheme'].update(new)
         animated_reskin(window=window,
-                        new_theme=rc(theme_list()),
+                        new_theme=new,
                         theme_function=theme,
                         lf_table=LOOK_AND_FEEL_TABLE)
 ``` 
@@ -72,8 +73,8 @@ I didn't want it to go against the built-in conventions of `theme` and `look_and
 ## Standards
 Reskinner is:
 
- - [X] built using Python 3.7 (in PyCharm),
+ -[X] built using Python 3.7 (in PyCharm),
 
- - [X] fully PEP-8 compliant,
+ -[X] fully PEP-8 compliant,
 
- - [X] distributed under the OSI-Approved MIT License.
+ -[X] distributed under the OSI-Approved MIT License.
