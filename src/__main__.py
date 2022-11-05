@@ -298,7 +298,7 @@ def reskin(
             elif el == 'menu':
                 element.BackgroundColor = theme_input_background_color()
                 element.TextColor = theme_input_text_color()
-                menudef = element.MenuDefinition
+                menudef = getattr(element, 'MenuDefinition')
                 element.update(menu_definition=menudef)
             elif el == 'sizegrip':
                 sizegrip_style = element.Widget.cget('style')
@@ -330,7 +330,7 @@ def reskin(
             elif el == 'button':
                 element.ButtonColor = theme_button_color()
                 # For regular Tk buttons
-                if 'ttk' not in str(type(element.TKButton)).lower():
+                if 'ttk' not in str(type(getattr(element, 'TKButton'))).lower():
                     element.Widget.configure(background=theme_button_color()[1], foreground=theme_button_color()[0],
                                              activebackground=theme_button_color()[0],
                                              activeforeground=theme_button_color()[1]
@@ -351,11 +351,11 @@ def reskin(
                                ]
                                )
             elif el == 'progressbar':
-                style_name = element.TKProgressBar.style_name
+                style_name = getattr(element, 'TKProgressBar').style_name
                 styler.configure(style_name, background=theme_progress_bar_color()[1],
                                  troughcolor=theme_progress_bar_color()[0])
             elif el == 'buttonmenu':
-                menudef = element.MenuDefinition
+                menudef = getattr(element, 'MenuDefinition')
                 element.BackgroundColor = theme_input_background_color()
                 element.TextColor = theme_input_text_color()
                 element.update(menu_definition=menudef)
@@ -548,9 +548,9 @@ safethemes = _safe_theme_list(LOOK_AND_FEEL_TABLE)
 
 
 def main():
-    # from psg_reskinner import reskin, animated_reskin
-    from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme_list, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
+    # from psg_reskinner import reskin, animated_reskin, __version__
     # from random import choice as rc
+    from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
 
     window_layout = [
         [Titlebar('Reskinner Demo')],
