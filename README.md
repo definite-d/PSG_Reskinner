@@ -13,7 +13,7 @@ pip install PSG-Reskinner
 ````
 
 <p align="center"> 
-    <img width="353" height="252" src="https://github.com/definite-d/psg_reskinner/blob/main/res/demo.gif">
+    <img src="https://github.com/definite-d/psg_reskinner/blob/main/res/demo.gif">
 </p>
 
 ## What's Reskinner?
