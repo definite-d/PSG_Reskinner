@@ -9,7 +9,7 @@
 ![License](https://img.shields.io/pypi/l/psg-reskinner.svg?style=flat&version=latest)
 
 ````shell
-pip install PSG-Reskinner
+pip install --upgrade PSG-Reskinner
 ````
 
 <p align="center"> 
