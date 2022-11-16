@@ -25,27 +25,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-# VERSIONING
-__version__ = '2.3.4.1'
-
-from _tkinter import TclError
-from datetime import datetime as dt, timedelta
-from random import choice as rc
-from tkinter.ttk import Style
-from typing import Callable, Dict, Union
-
 # IMPORTS
+from _tkinter import TclError
+from colour import COLOR_NAME_TO_RGB, Color
+from datetime import datetime as dt, timedelta
 from PySimpleGUI.PySimpleGUI import COLOR_SYSTEM_DEFAULT, LOOK_AND_FEEL_TABLE, TITLEBAR_CLOSE_KEY, \
     TITLEBAR_DO_NOT_USE_AN_ICON, TITLEBAR_IMAGE_KEY, TITLEBAR_MAXIMIZE_KEY, TITLEBAR_METADATA_MARKER, \
     TITLEBAR_MINIMIZE_KEY, TITLEBAR_TEXT_KEY, Window, _hex_to_hsl, _hsl_to_rgb, rgb, theme, theme_add_new, \
     theme_background_color, theme_button_color, theme_input_background_color, theme_input_text_color, \
     theme_progress_bar_color, theme_slider_color, theme_text_color, theme_text_element_background_color, \
     ttk_part_mapping_dict
-from colour import COLOR_NAME_TO_RGB, Color
+from random import choice as rc
+from tkinter.ttk import Style
+from typing import Callable, Dict, Union
+from warnings import warn
+
+# VERSIONING
+__version__: str = '2.3.5'
+
+
+# DEPRECATIION TRIGGER
+if __version__.startswith('2.4'):
+    m = 'Hello! Annoying little reminder to remove the deprecated functions, and this message.'
+    raise Exception(m)
+
 
 # CONSTANTS
 NON_GENERIC_ELEMENTS = [
-    'progress',
+    'progressbar',
     'tabgroup',
     'table',
     'tree',
@@ -58,6 +65,7 @@ NON_GENERIC_ELEMENTS = [
     'verticalseparator',
     'sizegrip',
 ]
+
 WINDOW_THEME_MAP = {}
 DISABLED_COLOR = '#A3A3A3'
 RGB_INTERPOLATION = 'rgb'
@@ -92,16 +100,15 @@ def _check_if_generics_apply(element_name: str) -> bool:
     :param element_name: The name of the element
     :return: bool
     """
-    valid = True
-    for case in NON_GENERIC_ELEMENTS:
-        if case in element_name:
-            valid = False
-            break
-    return valid
+    if element_name in NON_GENERIC_ELEMENTS:
+        return False
+    return True
 
 
 def _reverse_dict(input_dict: dict) -> dict:
     """
+    Deprecated from version 2.3.5; it will be removed entirely by the next minor release.
+
     Internal use only.
 
     Takes in a dict and returns a copy of it with the places of its keys and values swapped.
@@ -110,6 +117,8 @@ def _reverse_dict(input_dict: dict) -> dict:
     :param input_dict: The source dictionary.
     :return: dict
     """
+    warn('"_reverse_dict" has been deprecated from version 2.3.5; '
+         'it will be removed entirely by the next minor release.')
     result = {str(key): value for key, value in list(input_dict.items())}
     return result
 
@@ -129,7 +138,7 @@ def _configure_ttk_scrollbar_style(style_name: str, styler: Style, new_theme_dic
               'Input Element Background Color': new_theme_dict['INPUT'],
               'Input Element Text Color': new_theme_dict['TEXT_INPUT'],
               'Text Color': new_theme_dict['TEXT'],
-              'Slider Color': theme_slider_color()}
+              'Slider Color': new_theme_dict['SCROLL']}
 
     trough_color = mapper[ttk_part_mapping_dict['Trough Color']]
     frame_color = mapper[ttk_part_mapping_dict['Frame Color']]
@@ -164,6 +173,8 @@ def _check_for_honors(current_value: Union[str, int], check_value: Union[str, in
 
 def _flatten_dict(input_dict: dict, separator='_') -> dict:
     """
+    Deprecated from version 2.3.5; it will be removed entirely by the next minor release.
+
     Internal use only.
 
     Takes a single dict as input, flattens a copy of it so that its values have no container types and returns that one.
@@ -174,6 +185,8 @@ def _flatten_dict(input_dict: dict, separator='_') -> dict:
     :param separator: A character used for indicating containers' children.
     :return: The flattened dict.
     """
+    warn('"_flatten_dict" has been deprecated from version 2.3.5; '
+         'it will be removed entirely by the next minor release.')
     source = input_dict.copy()
     flat = {}
     for (key, value) in source.items():
@@ -343,13 +356,9 @@ def reskin(
 
     # Old theme stuff
     old_theme, old_theme_dict = WINDOW_THEME_MAP[window]
-    # rev_old_theme_dict = _reverse_dict(old_theme_dict)
 
     # New theme stuff
     new_theme_dict = lf_table[new_theme].copy()
-    # theme_function(new_theme)
-    # theme_add_new(new_theme, new_theme_dict)
-    # rev_new_theme_dict = _reverse_dict(new_theme_dict)
 
     # Window level changes
     if reskin_background:
@@ -361,7 +370,7 @@ def reskin(
             # Generic tweaks
             el = str(type(element)).lower()[:-2].rsplit('.', 1)[1]
             '''print(el)'''
-            if element.ParentRowFrame is not None:
+            if element.ParentRowFrame:
                 element.ParentRowFrame.configure(background=new_theme_dict['BACKGROUND'])
             if _check_if_generics_apply(el):
                 element.widget.configure(background=new_theme_dict['BACKGROUND'])
@@ -387,12 +396,10 @@ def reskin(
                 )
 
             # Handling ttk scrollbars
-            orientations = ['Vertical', 'Horizontal']
-            for i in range(window._counter_for_ttk_widgets):
-                for orientation in orientations:
-                    style_name = f'{i + 1}___{element.Key}.{orientation}.TScrollbar'
-                    if styler.configure(style_name) is not None:  # If we've stumbled upon a valid style:
-                        _configure_ttk_scrollbar_style(style_name, styler, new_theme_dict)
+            if element.hsb_style_name:
+                _configure_ttk_scrollbar_style(element.hsb_style_name, styler, new_theme_dict)
+            if element.vsb_style_name:
+                _configure_ttk_scrollbar_style(element.vsb_style_name, styler, new_theme_dict)
 
             # Custom Titlebar ___________________________________________________________________________________
             # Container Columns. A little duck-type hack is used to identify the expanded column.
@@ -413,6 +420,10 @@ def reskin(
                     element.ParentRowFrame.configure(background=new_theme_dict['BUTTON'][1])
 
             # Other elements
+            if el == 'column' and element.Scrollable:
+                    element.TKColFrame.canvas.config(background=new_theme_dict['BACKGROUND'])
+                    element.TKColFrame.TKFrame.config(background=new_theme_dict['BACKGROUND'])
+
             if el in ('text', 'statusbar'):
                 text_fg = element.widget.cget('foreground')
                 text_bg = element.widget.cget('background')
@@ -628,7 +639,7 @@ def animated_reskin(
     Here, we break down the themedict so there are no containers (e.g. the BUTTON entry), and store the result in the 
     colors variable, using {key}___@{index} to denote container types.
     
-    Hence `'BUTTON': ('#asdf', '#123456')` will become `'BUTTON___0': '#asdf'` and `'BUTTON___1':'#123456'`.
+    Hence `'BUTTON': ('#asdf', '#123456')` will become `'BUTTON___@0': '#asdf'` and `'BUTTON___@1':'#123456'`.
     """
     for key in old_themedict:
         if key in new_themedict:
@@ -662,49 +673,55 @@ def animated_reskin(
     
     ...means the exact same thing as t.
     """
-    while dt.now() <= end_time:
-        interdict: dict = new_themedict.copy()
-        delta = (float(str((dt.now() - call_time)).rsplit(':', 1)[1]) * 1000) / duration
-        for k, (a, b) in colors.items():
-            try:
-                current: str = _interpolate_colors(a, b, delta, interpolation_mode)
-            except ValueError:
-                continue
-            if '___@' not in k:  # Nice and simple; a single-color theme entry.
-                interdict[k] = current
-                continue
-            else:  # A tuple-style theme entry. The intermediary themedict uses lists instead.
-                k, pos = k.split('___@')
-                interdict[k] = [] if not isinstance(interdict[k], list) else interdict[k]
-                interdict[k].insert(int(pos), current)
+    try:
+        while dt.now() <= end_time:
+            interdict: dict = new_themedict.copy()
+            delta = (float(str((dt.now() - call_time)).rsplit(':', 1)[1]) * 1000) / duration
+            for k, (a, b) in colors.items():
+                try:
+                    current: str = _interpolate_colors(a, b, delta, interpolation_mode)
+                except ValueError:
+                    continue
+                if '___@' not in k:  # Nice and simple; a single-color theme entry.
+                    interdict[k] = current
+                    continue
+                else:  # A tuple-style theme entry. The intermediary themedict uses lists instead.
+                    k, pos = k.split('___@')
+                    interdict[k] = [] if not isinstance(interdict[k], list) else interdict[k]
+                    interdict[k].insert(int(pos), current)
 
-        # Temporarily rename the current point to the destination.
-        lf_table[new_theme] = interdict
+            # Temporarily rename the current point to the destination.
+            lf_table[new_theme] = interdict
+            try:
+                reskin(window, new_theme, theme_function, LOOK_AND_FEEL_TABLE, set_future,
+                       exempt_element_keys, target_element_keys, honor_previous, reskin_background)
+            except TclError:  # The window has been closed.
+                pass
+        """
+        End of animation reached.
+        
+        Due to smaller, more precise time-based delta (duration progress per frame) increments, and the condition for 
+        checking if the animation should end being based on (ultimately imprecise) time comparisons, delta never actually 
+        reaches 1, hence the interpolation will not end exactly at the new theme's colors (the destination). 
+        
+        Rather, it will end at a value as close as the time comparison permits (which is extremely close to the actual 
+        destination), then skip to the destination itself.
+          
+        The effect of the skip is almost unnoticeable, and the end user probably wouldn't even know, but it's there ;).
+        
+        Hope that explains the animation process.
+        """
+        lf_table[new_theme] = new_themedict
         try:
-            reskin(window, new_theme, theme_function, LOOK_AND_FEEL_TABLE, set_future,
-                   exempt_element_keys, target_element_keys, honor_previous, reskin_background)
+            reskin(window, new_theme, theme_function, lf_table, set_future, exempt_element_keys,
+                   target_element_keys, honor_previous, reskin_background)
         except TclError:  # The window has been closed.
             pass
-    """
-    End of animation reached.
-    
-    Due to smaller, more precise time-based delta (duration progress per frame) increments, and the condition for 
-    checking if the animation should end being based on (ultimately imprecise) time comparisons, delta never actually 
-    reaches 1, hence the interpolation will not end exactly at the new theme's colors (the destination). 
-    
-    Rather, it will end at a value as close as the time comparison permits (which is extremely close to the actual 
-    destination), then skip to the destination itself.
-      
-    The effect of the skip is almost unnoticeable, and the end user probably wouldn't even know, but it's there ;).
-    
-    Hope that explains the animation process.
-    """
-    lf_table[new_theme] = new_themedict
-    try:
-        reskin(window, new_theme, theme_function, lf_table, set_future, exempt_element_keys,
-               target_element_keys, honor_previous, reskin_background)
-    except TclError:  # The window has been closed.
-        pass
+
+    except Exception as e:
+        # Basically provide more context to whatever error occurs.
+        print(f'While trying to perform an animated reskin from {WINDOW_THEME_MAP[window][0]} to {new_theme}, an exception occurred:')
+        raise e
 
 
 def toggle_transparency(window: Window) -> None:
@@ -723,11 +740,9 @@ def toggle_transparency(window: Window) -> None:
 
 # MAIN FUNCTION
 
-
 # Required because certain themes currently cause this error:
 #   _tkinter.TclError: unknown color name "1234567890"
 safethemes = _safe_theme_list(LOOK_AND_FEEL_TABLE)
-
 
 def main():
     """
