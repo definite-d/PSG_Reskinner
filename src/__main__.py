@@ -2,9 +2,10 @@
 PySimpleGUI Reskinner Plugin
 
 https://github.com/definite_d/psg_reskinner/
+
 Enables changing the theme of a PySimpleGUI window on the fly without the need for re-instantiating the window
 
-Copyright (c) 2022 Divine Afam-Ifediogor
+Copyright (c) 2023 Divine Afam-Ifediogor
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,24 +25,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
 # IMPORTS
-from _tkinter import TclError
-from colour import COLOR_NAME_TO_RGB, Color
 from datetime import datetime as dt, timedelta
-from PySimpleGUI.PySimpleGUI import COLOR_SYSTEM_DEFAULT, LOOK_AND_FEEL_TABLE, TITLEBAR_METADATA_MARKER,\
-    Window, _hex_to_hsl, _hsl_to_rgb, rgb, theme, theme_add_new, theme_background_color, theme_button_color, \
-    theme_input_background_color, theme_input_text_color, theme_progress_bar_color, theme_slider_color, \
-    theme_text_color, theme_text_element_background_color, ttk_part_mapping_dict
 from random import choice as rc
+from tkinter import Menu as TKMenu, Widget
 from tkinter.ttk import Style
 from typing import Callable, Dict, Union
 from warnings import warn
 
-# VERSIONING
-__version__: str = '2.3.7'
+from PySimpleGUI.PySimpleGUI import COLOR_SYSTEM_DEFAULT, LOOK_AND_FEEL_TABLE, TITLEBAR_METADATA_MARKER, \
+    Window, _hex_to_hsl, _hsl_to_rgb, rgb, theme, ttk_part_mapping_dict
+from _tkinter import TclError
 
-# DEPRECATIION TRIGGER
+from colour import COLOR_NAME_TO_RGB, Color
+
+# VERSIONING
+__version__: str = '2.3.8'
+
+# DEPRECATION TRIGGER
 if __version__.startswith('2.4'):
     m = 'Hello! Annoying little reminder to remove the deprecated functions, and this message.'
     raise Exception(m)
@@ -268,7 +269,7 @@ def _interpolate_colors(
 
     - RGB interpolation is simple lerping through RGB color space.
     - Hue interpolation is lerping through HSL color space but moving only forward on the hue scale until it reaches the end color.
-    - HSV interpolation also lerps across HSL color space but it takes the shortest route to get to the end color.
+    - HSV interpolation also lerps across HSL color space, but it takes the shortest route to get to the end color.
 
     Note: "lerp" means "linear-interpolation", in case you didn't know.
 
@@ -276,11 +277,12 @@ def _interpolate_colors(
 
     First available from v2.3.4.
 
+
     :param start: The starting color.
     :param end: The end color.
     :param progress: A float representing the current point in the interpolation where 0 marks the beginning and 1 marks
     the end.
-    :param mode: The method to use for the interpolation calculation. Defaults to RGB interpolation.
+    :param interpolation_mode: The method to use for the interpolation calculation. Defaults to RGB interpolation.
     :return: A web-format color string representing the result of the calculation.
     """
     result = Color()
@@ -311,6 +313,33 @@ def _interpolate_colors(
         result.set_luminance((start.get_luminance() + ((end.get_luminance() - start.get_luminance()) * progress)))
 
     return result.get_web()
+
+
+def _recurse_menu(tkmenu: Union[TKMenu, Widget], fg: Union[Color, str], bg: Union[Color, str]):
+    """
+    Internal use only.
+
+    New and improved logic to change the theme of menus; we no longer take the lazy route of
+    re-declaring new menu elements with each theme change - a method which Tkinter has an upper limit
+    on. Rather, we recursively find and reconfigure the individual Menu objects that make up menus and
+    submenus.
+
+    First available from v2.3.7.
+
+    :param tkmenu: The Tkinter menu object.
+    :return: None
+    """
+    for index in range(0, tkmenu.index('end') + 1):
+        tkmenu.entryconfigure(
+            index,
+            background=bg,
+            foreground=fg,
+            activeforeground=bg,
+            activebackground=fg,
+        )
+    for child in tkmenu.children.values():
+        if issubclass(type(child), TKMenu):
+            _recurse_menu(child, fg, bg)
 
 
 # RESKIN AND UTILITY FUNCTIONS
@@ -363,7 +392,7 @@ def reskin(
 
     # Window level changes
     if reskin_background:
-        window.TKroot.config(background=new_theme_dict['BACKGROUND'])
+        window.TKroot.configure(background=new_theme_dict['BACKGROUND'])
 
     titlebar_row_frame = 'Not Set'
 
@@ -384,20 +413,7 @@ def reskin(
 
             # Right Click Menus (thanks for pointing this out @dwelden!)
             if element.TKRightClickMenu:
-                element.ParentForm.right_click_menu_background_color = new_theme_dict['INPUT']
-                element.ParentForm.right_click_menu_text_color = new_theme_dict['TEXT_INPUT']
-                element.ParentForm.right_click_menu_disabled_color = DISABLED_COLOR
-                element.ParentForm.right_click_menu_selected_colors = (
-                    new_theme_dict['INPUT'], new_theme_dict['TEXT_INPUT']
-                )
-                element.set_right_click_menu(element.RightClickMenu)
-                # We were never here...
-                element.ParentForm.right_click_menu_background_color = old_theme_dict['INPUT']
-                element.ParentForm.right_click_menu_text_color = old_theme_dict['TEXT_INPUT']
-                element.ParentForm.right_click_menu_disabled_color = DISABLED_COLOR
-                element.ParentForm.right_click_menu_selected_colors = (
-                    old_theme_dict['INPUT'], old_theme_dict['TEXT_INPUT']
-                )
+                _recurse_menu(element.TKRightClickMenu, new_theme_dict['TEXT_INPUT'], new_theme_dict['INPUT'])
 
             # Handling ttk scrollbars
             if hasattr(element, 'ttk_style_name'):
@@ -416,7 +432,7 @@ def reskin(
             if str(element.widget).startswith(titlebar_row_frame+'.'):
                 element.ParentRowFrame.configure(background=new_theme_dict['BUTTON'][1])
                 element.widget.configure(background=new_theme_dict['BUTTON'][1])
-                if el in ('image', 'text'):
+                if 'foreground' in element.widget.keys():
                     element.widget.configure(foreground=new_theme_dict['BUTTON'][0])
                 continue
 
@@ -440,10 +456,9 @@ def reskin(
                 continue
 
             elif el == 'menu':
-                element.BackgroundColor = new_theme_dict['INPUT']
-                element.TextColor = new_theme_dict['TEXT_INPUT']
-                menudef = getattr(element, 'MenuDefinition')
-                element.update(menu_definition=menudef)
+                _recurse_menu(element.widget, new_theme_dict['TEXT_INPUT'], new_theme_dict['INPUT'])
+                # menudef = getattr(element, 'MenuDefinition')
+                # element.update(menu_definition=menudef)
                 continue
 
             elif el == 'sizegrip':
@@ -490,7 +505,6 @@ def reskin(
                 continue
 
             elif el == 'button':
-                element.ButtonColor = new_theme_dict['BUTTON']
                 # For regular Tk buttons
                 if 'ttk' not in str(type(getattr(element, 'TKButton'))).lower():
                     element.widget.configure(
@@ -528,17 +542,11 @@ def reskin(
                 continue
 
             elif el == 'buttonmenu':
-                menudef = getattr(element, 'MenuDefinition')
-                element.BackgroundColor = new_theme_dict['INPUT']
-                element.TextColor = new_theme_dict['TEXT_INPUT']
                 element.widget.configure(
                     background=new_theme_dict['BUTTON'][1],
                     foreground=new_theme_dict['BUTTON'][0]
                 )
-                element.update(menu_definition=menudef)
-                # We were never here.
-                element.BackgroundColor = old_theme_dict['INPUT']
-                element.TextColor = old_theme_dict['TEXT_INPUT']
+                _recurse_menu(element.TKMenu, fg=new_theme_dict['TEXT_INPUT'], bg=new_theme_dict['INPUT'])
                 continue
 
             elif el in 'spin':
@@ -745,8 +753,8 @@ def animated_reskin(
         End of animation reached.
 
         Due to smaller, more precise time-based delta (duration progress per frame) increments, and the condition for 
-        checking if the animation should end being based on (ultimately imprecise) time comparisons, delta never actually 
-        reaches 1, hence the interpolation will not end exactly at the new theme's colors (the destination). 
+        checking if the animation should end being based on (ultimately imprecise) time comparisons, delta never 
+        actually reaches 1, hence the interpolation will not end exactly at the new theme's colors (the destination). 
 
         Rather, it will end at a value as close as the time comparison permits (which is extremely close to the actual 
         destination), then skip to the destination itself.
@@ -765,7 +773,9 @@ def animated_reskin(
     except Exception as e:
         # Basically provide more context to whatever error occurs.
         print(
-            f'While trying to perform an animated reskin from {WINDOW_THEME_MAP[window][0]} to {new_theme}, an exception occurred:')
+            f'While trying to perform an animated reskin from {WINDOW_THEME_MAP[window][0]} to {new_theme}, an '
+            f'exception occurred:'
+        )
         raise e
 
 
@@ -798,11 +808,11 @@ def main():
 
     First available from v1.0.0.
     """
-    # from psg_reskinner import reskin, animated_reskin, __version__
-    from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme_list, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
-    # from random import choice as rc
+    from psg_reskinner import reskin, animated_reskin, __version__
+    from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
+    from random import choice as rc
 
-    rmenu = ['', ['Hi', 'There']]
+    rmenu = ['', [['Hi', ['Next Level', ['Deeper Level', ['a', 'b', 'c']], 'Hoho']], 'There']]
 
     window_layout = [
         [Titlebar('Reskinner Demo')],
