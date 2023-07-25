@@ -53,8 +53,7 @@ while True:
         break
 
     elif e == TIMEOUT_KEY:
-        '''reskin(window, rc(theme_list()), theme, LOOK_AND_FEEL_TABLE)'''
-        new = rc(safethemes)
+        new = rc(theme_list())
         window['ctheme'].update(new)
         animated_reskin(window=window,
                         new_theme=new,
