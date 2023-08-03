@@ -39,7 +39,7 @@ from PySimpleGUI.PySimpleGUI import COLOR_SYSTEM_DEFAULT, LOOK_AND_FEEL_TABLE, T
 from colour import COLOR_NAME_TO_RGB, Color
 
 # VERSIONING
-__version__: str = '2.3.11'
+__version__: str = '2.3.12'
 
 # DEPRECATION TRIGGER
 if __version__.startswith('2.4'):
