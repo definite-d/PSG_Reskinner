@@ -10,8 +10,6 @@ from psg_reskinner import __version__ as VERSION
 from os import system
 from datetime import datetime
 from bumpver.version import parse_version
-from argparse import ArgumentParser as p
-
 
 DEFAULT_UPLOAD_DESTINATION = 'legacy'
 
@@ -76,6 +74,6 @@ def update_demo():
 
 
 # update_demo()
-commit()
+# commit()
 # bumpver()
 # build()
