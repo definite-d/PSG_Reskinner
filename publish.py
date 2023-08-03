@@ -79,37 +79,3 @@ def update_demo():
 commit()
 # bumpver()
 # build()
-'''
-def _main():
-    """
-    Internal use only.
-
-    Handles the CLI for the script.
-
-    Runs when the script is run.
-
-    """
-    parser = p()
-    parser.add_argument('task',
-                        help='Defines what the script will do; \'build\', \'upload\' or \'complete\' (does both).')
-    parser.add_argument('--upload_to',
-                        help='Where to upload the distro to. '
-                             'Should either be \'test\' (to upload to test PyPi) or \'legacy\'. '
-                             f'Defaults to {DEFAULT_UPLOAD_DESTINATION}.'
-                             'Useful when building.')
-    args = parser.parse_args()
-    if args.task:
-        if args.task == 'build' or args.task == 'complete':
-            build()
-        if args.task == 'upload' or args.task == 'complete':
-            if not args.upload_to:
-                args.upload_to = DEFAULT_UPLOAD_DESTINATION
-            if args.upload_to == 'test':
-                upload_testpypi()
-            elif args.upload_to == 'legacy':
-                upload_legacy()
-
-_main()
-'''
-
-
