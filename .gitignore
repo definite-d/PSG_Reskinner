@@ -1,0 +1,6 @@
+.env
+.idea
+__pycache__
+build
+mypy_cache
+psg_reskinner.egg-info
