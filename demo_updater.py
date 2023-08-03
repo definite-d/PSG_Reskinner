@@ -16,7 +16,7 @@ demo_lines = demo_lines[0][
 demo_lines = ''.join([_line[4:] for _line in demo_lines])[:-1]
 
 # Then the hydration occurs.
-with open('./dry_readme.md', 'r') as readme:
+with open('./README_DRY.md', 'r') as readme:
     print('\rReading dry README file...', end='')
     data = readme.read()
     pattern = re.compile(r'# Demo code goes here. Run the demo_updater.py script to hydrate it.')

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "psg_reskinner"
 description = "Instantaneous theme changing for PySimpleGUI windows."
 version = "2.3.12"
-readme = "DESCRIPTION.md"
+readme = "./res/DESCRIPTION.md"
 authors = [{ name = "Divine U. Afam-Ifediogor", email = "divineafam@gmail.com" }]
 license = { file = "LICENSE" }
 classifiers=[
@@ -43,6 +43,9 @@ push = true
     'version = "{version}"',
 ]
 "./README.md" = [
+    "Version {version}",
+]
+"./res/README_DRY.md" = [
     "Version {version}",
 ]
 "psg_reskinner/__main__.py" = [
