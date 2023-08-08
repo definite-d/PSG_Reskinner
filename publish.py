@@ -77,3 +77,4 @@ def update_demo():
 # commit()
 # bumpver()
 # build()
+# upload_legacy()
