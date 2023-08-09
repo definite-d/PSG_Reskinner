@@ -14,4 +14,4 @@ on the fly without the need for re-instantiating the window.
 Find out more at [the Github page](https://github.com/definite-d/psg_reskinner/), and please consider starring the 
 project if you find it useful.
 
-Copyright (c) 2022 Afam-Ifediogor Divine.
+Copyright (c) 2023 Afam-Ifediogor Divine.
