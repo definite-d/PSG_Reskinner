@@ -25,7 +25,7 @@ Please consider starring the project if you find it useful.
 ## Example Usage (Demo)
 
 ```python
-# Reskinner Version 2.3.12
+# Reskinner Version 2.3.13
 from psg_reskinner import animated_reskin, __version__
 from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, theme_list, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
 from random import choice as rc
