@@ -4,3 +4,4 @@ __pycache__
 build
 mypy_cache
 psg_reskinner.egg-info
+access_token.txt
