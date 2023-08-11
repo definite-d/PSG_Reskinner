@@ -32,6 +32,7 @@ def commit(message: str = f'New Commit at {datetime.now()}'):
     """
     print('Staging commit...')
     run(f'git commit -m "{message}" -a', cwd=WORKING_DIR)
+    print('Commit completed.')
 
 
 def upload_testpypi(version: str = VERSION):
