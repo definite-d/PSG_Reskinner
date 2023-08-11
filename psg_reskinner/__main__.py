@@ -977,7 +977,7 @@ def main():
     window = Window('Reskinner Demo', window_layout, element_justification='center', keep_on_top=True)
 
     def _reskin_job():
-        themes = theme_list().copy()
+        themes = theme_list()
         themes.remove(theme())
         new = rc(themes)
         window['current_theme'].update(new)
