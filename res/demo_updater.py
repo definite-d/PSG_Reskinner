@@ -10,7 +10,7 @@ README_PATH = '../README.md'
 START_DEMO = '# % START DEMO % #'
 END_DEMO = '# % END DEMO % #'
 
-print('Updating Demo Code in main README.')
+print('Updating Demo Code in main README.', end='')
 
 print('\rObtaining demo code from main function...', end='')
 
