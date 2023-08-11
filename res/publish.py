@@ -1,22 +1,24 @@
 """
 Build script for psg_reskinner.
 """
-
-from subprocess import run
 from datetime import datetime
+from os.path import abspath, split, sep
+from subprocess import run
+
 from bumpver.version import parse_version
 from import_util import import_by_file
-from os.path import abspath
 
 VERSION = (import_by_file('psg_reskinner', '..')).__version__
 print(f'Working with Reskinner v{VERSION}.')
 
 DEFAULT_UPLOAD_DESTINATION = 'legacy'
 DEFAULT_OUTPUT_DIR = f'dist/v{parse_version(VERSION).major}/{VERSION}'
-WORKING_DIR = abspath('../')
+FILE_DIR = abspath(split(__file__)[0])
+WORKING_DIR = abspath(FILE_DIR.rsplit(sep, 1)[0])
 
-with open('../.env', 'r') as env:
+with open(f'{FILE_DIR}/.env', 'r') as env:
     TOKEN = env.readline()
+
 
 def build():
     """
