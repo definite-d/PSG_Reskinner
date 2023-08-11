@@ -84,9 +84,9 @@ def update_description_year():
     run('python description_year_updater.py')
 
 
-update_demo()
-update_description_year()
-commit()
+# update_demo()
+# update_description_year()
+# commit()
 # bumpver()
 # build()
 # upload_legacy()
