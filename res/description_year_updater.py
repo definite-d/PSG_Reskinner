@@ -14,4 +14,4 @@ with open('DESCRIPTION.md', 'r') as desc:
 with open('DESCRIPTION.md', 'w') as desc:
     desc.write(content)
 
-print('\rDESCRIPTION file year updated.')
+print('\rDESCRIPTION file year updated successfully.')
