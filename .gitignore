@@ -1,7 +1,8 @@
 .env
 .idea
 __pycache__
+access_token.txt
 build
 mypy_cache
 psg_reskinner.egg-info
-access_token.txt
+res/__init__.py

@@ -27,34 +27,50 @@ Please consider starring the project if you find it useful.
 ```python
 # Reskinner Version 2.3.13
 from psg_reskinner import animated_reskin, __version__
-from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, theme_list, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
+from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, theme_list, LOOK_AND_FEEL_TABLE
 from random import choice as rc
-rmenu = ['', [['Hi', ['Next Level', ['Deeper Level', ['a', 'b', 'c']], 'Hoho']], 'There']]
+
+right_click_menu = ['', [['Hi', ['Next Level', ['Deeper Level', ['a', 'b', 'c']], 'Hoho']], 'There']]
+
 window_layout = [
     [Titlebar('Reskinner Demo')],
     [Text('Hello!', font=('Helvetica', 20))],
     [Text('You are currently running Reskinner instead of importing it.')],
     [Text('The theme of this window changes every 2 seconds.')],
     [Text('Changing to:')],
-    [Button('DarkBlue3', k='ctheme', font=('Helvetica', 16), right_click_menu=rmenu)],
+    [Button('DarkBlue3', k='current_theme', font=('Helvetica', 16), right_click_menu=right_click_menu)],
     [Text(f'Reskinner v{__version__}', font=('Helvetica', 8), pad=(0, 0)), Push()],
 ]
-window = Window('Reskinner Demo', window_layout, element_justification='center')
+
+window = Window('Reskinner Demo', window_layout, element_justification='center', keep_on_top=True)
+
+def _reskin_job():
+    themes = theme_list().copy()
+    themes.remove(theme())
+    new = rc(themes)
+    window['current_theme'].update(new)
+    animated_reskin(
+        window=window,
+        new_theme=new,
+        theme_function=theme,
+        lf_table=LOOK_AND_FEEL_TABLE,
+    )
+    window.TKroot.after(2000, _reskin_job)
+
+started = False
+
 while True:
-    e, v = window.Read(timeout=2000)
+
+    e, v = window.read(timeout=2000)
+
     if e in (None, 'Exit'):
         window.Close()
         break
-    elif e == TIMEOUT_KEY:
-        '''reskin(window, rc(theme_list()), theme, LOOK_AND_FEEL_TABLE)'''
-        new = rc(theme_list())
-        window['ctheme'].update(new)
-        animated_reskin(
-            window=window,
-            new_theme=new,
-            theme_function=theme,
-            lf_table=LOOK_AND_FEEL_TABLE,
-        )
+
+    if not started:
+        _reskin_job()
+        started = True
+
 ```
 
 ## How does it work?

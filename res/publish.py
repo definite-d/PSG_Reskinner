@@ -73,6 +73,7 @@ def update_demo():
     """
     run('python demo_updater.py')
 
+
 def update_description_year():
     """
     Internal use only.
@@ -82,9 +83,9 @@ def update_description_year():
     run('python description_year_updater.py')
 
 
-# update_demo()
-# update_description_year()
-# commit()
+update_demo()
+update_description_year()
+commit()
 # bumpver()
-# build()
+build()
 # upload_legacy()

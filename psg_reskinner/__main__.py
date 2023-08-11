@@ -33,9 +33,9 @@ from tkinter.ttk import Style
 from typing import Callable, Dict, Union
 from warnings import warn
 
-from PySimpleGUI.PySimpleGUI import COLOR_SYSTEM_DEFAULT, LOOK_AND_FEEL_TABLE, TITLEBAR_METADATA_MARKER, \
-    Window, _hex_to_hsl, _hsl_to_rgb, rgb, ttk_part_mapping_dict, DEFAULT_PROGRESS_BAR_COLOR_OFFICIAL, \
-    DEFAULT_PROGRESS_BAR_COMPUTE
+from PySimpleGUI.PySimpleGUI import COLOR_SYSTEM_DEFAULT, DEFAULT_PROGRESS_BAR_COLOR_OFFICIAL, \
+    DEFAULT_PROGRESS_BAR_COMPUTE, LOOK_AND_FEEL_TABLE, TITLEBAR_METADATA_MARKER, Window, _hex_to_hsl, _hsl_to_rgb, \
+    rgb, ttk_part_mapping_dict
 from colour import COLOR_NAME_TO_RGB, Color
 
 # VERSIONING
@@ -467,6 +467,25 @@ def reskin(
     :param reskin_background: True by default. If `True`, the window's background will be affected.
     :return: None
     """
+    # Firstly, we add the window to the mapping of windows that we've encountered thus far.
+    # This mapping is important because it enables us to obtain the previous theme programmatically
+    # at all times, a feature required by Reskinner.
+    if window not in list(WINDOW_THEME_MAP.keys()):
+        WINDOW_THEME_MAP[window] = (theme_function(), lf_table[theme_function()])
+
+    # Obtain the old and new theme names and themedicts.
+    old_theme, old_theme_dict = WINDOW_THEME_MAP[window]
+    new_theme_dict = lf_table[new_theme].copy()
+
+    # Before going any further, we have enough info to disregard redundant calls, so we do so...
+    if (new_theme == old_theme) and (new_theme_dict == old_theme_dict):
+        return
+
+    # COLOR_SYSTEM_DEFAULT Sieve
+    _sieve = _ColorSystemDefaultSieve(window)
+    old_theme_dict = _sieve.sieve_themedict(_compute_progressbar(old_theme_dict))
+    new_theme_dict = _sieve.sieve_themedict(_compute_progressbar(new_theme_dict))
+
     # Handle parameters
     if target_element_keys is not None and exempt_element_keys is not None:
         raise (ReskinnerException('Target elements and Exempt elements can\'t both be specified.'))
@@ -474,20 +493,6 @@ def reskin(
     if target_element_keys or exempt_element_keys:
         whitelist = target_element_keys if target_element_keys else \
             list(filter(lambda key: key not in exempt_element_keys, whitelist))
-
-    if window not in list(WINDOW_THEME_MAP.keys()):
-        WINDOW_THEME_MAP[window] = (theme_function(), lf_table[theme_function()])
-
-    # COLOR_SYSTEM_DEFAULT Sieve
-    _sieve = _ColorSystemDefaultSieve(window)
-
-    # Old theme stuff
-    old_theme, old_theme_dict = WINDOW_THEME_MAP[window]
-    old_theme_dict = _sieve.sieve_themedict(_compute_progressbar(old_theme_dict))
-
-    # New theme stuff
-    new_theme_dict = lf_table[new_theme].copy()
-    new_theme_dict = _sieve.sieve_themedict(_compute_progressbar(new_theme_dict))
 
     # Window level changes
     if reskin_background:
@@ -503,11 +508,11 @@ def reskin(
         if element.ParentRowFrame:
             element.ParentRowFrame.configure(background=new_theme_dict['BACKGROUND'])
         if _is_element_generic(el) \
-            and _check_for_honors(
-                element.widget.cget('background'),
-                old_theme_dict['BACKGROUND'],
-                honor_previous
-            ):
+                and _check_for_honors(
+            element.widget.cget('background'),
+            old_theme_dict['BACKGROUND'],
+            honor_previous
+        ):
             element.widget.configure(background=new_theme_dict['BACKGROUND'])
 
         # Declare a styler object.
@@ -953,11 +958,11 @@ def main():
     First available from v1.0.0.
     """
     # % START DEMO % #
-    from psg_reskinner import animated_reskin, __version__
-    from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, theme_list, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
+    # from psg_reskinner import animated_reskin, __version__
+    from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, theme_list, LOOK_AND_FEEL_TABLE
     from random import choice as rc
 
-    rmenu = ['', [['Hi', ['Next Level', ['Deeper Level', ['a', 'b', 'c']], 'Hoho']], 'There']]
+    right_click_menu = ['', [['Hi', ['Next Level', ['Deeper Level', ['a', 'b', 'c']], 'Hoho']], 'There']]
 
     window_layout = [
         [Titlebar('Reskinner Demo')],
@@ -965,29 +970,39 @@ def main():
         [Text('You are currently running Reskinner instead of importing it.')],
         [Text('The theme of this window changes every 2 seconds.')],
         [Text('Changing to:')],
-        [Button('DarkBlue3', k='ctheme', font=('Helvetica', 16), right_click_menu=rmenu)],
+        [Button('DarkBlue3', k='current_theme', font=('Helvetica', 16), right_click_menu=right_click_menu)],
         [Text(f'Reskinner v{__version__}', font=('Helvetica', 8), pad=(0, 0)), Push()],
     ]
 
-    window = Window('Reskinner Demo', window_layout, element_justification='center')
+    window = Window('Reskinner Demo', window_layout, element_justification='center', keep_on_top=True)
+
+    def _reskin_job():
+        themes = theme_list().copy()
+        themes.remove(theme())
+        new = rc(themes)
+        window['current_theme'].update(new)
+        animated_reskin(
+            window=window,
+            new_theme=new,
+            theme_function=theme,
+            lf_table=LOOK_AND_FEEL_TABLE,
+        )
+        window.TKroot.after(2000, _reskin_job)
+
+    started = False
+
     while True:
 
-        e, v = window.Read(timeout=2000)
+        e, v = window.read(timeout=2000)
 
         if e in (None, 'Exit'):
             window.Close()
             break
 
-        elif e == TIMEOUT_KEY:
-            '''reskin(window, rc(theme_list()), theme, LOOK_AND_FEEL_TABLE)'''
-            new = rc(theme_list())
-            window['ctheme'].update(new)
-            animated_reskin(
-                window=window,
-                new_theme=new,
-                theme_function=theme,
-                lf_table=LOOK_AND_FEEL_TABLE,
-            )
+        if not started:
+            _reskin_job()
+            started = True
+
     # % END DEMO % #
     return
 
