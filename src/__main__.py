@@ -26,21 +26,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 # IMPORTS
+from _tkinter import TclError
 from datetime import datetime as dt, timedelta
-from random import choice as rc
 from tkinter import Menu as TKMenu, Widget
 from tkinter.ttk import Style
 from typing import Callable, Dict, Union
 from warnings import warn
 
-from PySimpleGUI.PySimpleGUI import COLOR_SYSTEM_DEFAULT, LOOK_AND_FEEL_TABLE, TITLEBAR_METADATA_MARKER, \
-    Window, _hex_to_hsl, _hsl_to_rgb, rgb, theme, ttk_part_mapping_dict
-from _tkinter import TclError
-
+from PySimpleGUI.PySimpleGUI import COLOR_SYSTEM_DEFAULT, DEFAULT_PROGRESS_BAR_COLOR_OFFICIAL, \
+    DEFAULT_PROGRESS_BAR_COMPUTE, LOOK_AND_FEEL_TABLE, TITLEBAR_METADATA_MARKER, Window, _hex_to_hsl, _hsl_to_rgb, \
+    rgb, ttk_part_mapping_dict
 from colour import COLOR_NAME_TO_RGB, Color
 
 # VERSIONING
-__version__: str = '2.3.8'
+__version__: str = '2.3.13'
 
 # DEPRECATION TRIGGER
 if __version__.startswith('2.4'):
@@ -49,18 +48,18 @@ if __version__.startswith('2.4'):
 
 # CONSTANTS
 NON_GENERIC_ELEMENTS = [
+    'button',
+    'horizontalseparator',
+    'listbox',
+    'multiline',
     'progressbar',
+    'sizegrip',
+    'spin',
     'tabgroup',
     'table',
-    'tree',
-    'button',
     'text',
-    'multiline',
-    'listbox',
-    'spin',
-    'horizontalseparator',
-    'verticalseparator',
-    'sizegrip',
+    'tree',
+    'verticalseparator'
 ]
 
 WINDOW_THEME_MAP = {}
@@ -69,6 +68,7 @@ RGB_INTERPOLATION = 'rgb'
 HUE_INTERPOLATION = 'hue'
 HSL_INTERPOLATION = 'hsv'
 ALTER_MENU_ACTIVE_COLORS = True
+DEFAULT_ANIMATED_RESKIN_DURATION = 450
 
 
 # ERROR CLASS
@@ -84,7 +84,7 @@ class ReskinnerException(Exception):
 
 
 # UTILITY FUNCTIONS
-def _check_if_generics_apply(element_name: str) -> bool:
+def _is_element_generic(element_name: str) -> bool:
     """
     Internal use only.
 
@@ -93,6 +93,7 @@ def _check_if_generics_apply(element_name: str) -> bool:
     If the element affected by the non-generic elements blacklist, it returns False.
 
     First available from v1.1.3.
+    Renamed from `_check_if_generics_apply` to `_is_element_generic` in v2.3.12.
     :param element_name: The name of the element
     :return: bool
     """
@@ -103,7 +104,7 @@ def _check_if_generics_apply(element_name: str) -> bool:
 
 def _reverse_dict(input_dict: dict) -> dict:
     """
-    Deprecated from version 2.3.5; it will be removed entirely by the next minor release.
+    Deprecated from version 2.3.5; it will be removed entirely by the next minor release (version 2.4.x).
 
     Internal use only.
 
@@ -114,12 +115,16 @@ def _reverse_dict(input_dict: dict) -> dict:
     :return: dict
     """
     warn('"_reverse_dict" has been deprecated from version 2.3.5; '
-         'it will be removed entirely by the next minor release.')
+         'it will be removed entirely by the next minor release (version 2.4.x).')
     result = {str(key): value for key, value in list(input_dict.items())}
     return result
 
 
-def _configure_ttk_scrollbar_style(style_name: str, styler: Style, new_theme_dict: Dict) -> None:
+def _configure_ttk_scrollbar_style(
+        style_name: str,
+        styler: Style,
+        new_theme_dict: Dict
+) -> None:
     """
     Internal use only.
 
@@ -163,6 +168,9 @@ def _check_for_honors(current_value: Union[str, int], check_value: Union[str, in
 
     Used as a lazy shortcut function to conduct `honor_previous` checks.
 
+    If True, the element's previous color is preserved instead of changing it,
+    hence "honoring" that color.
+
     First available from v2.2.0.
 
     :param current_value: The current value to check
@@ -171,13 +179,15 @@ def _check_for_honors(current_value: Union[str, int], check_value: Union[str, in
     :param honor_previous: The honor previous boolean.
     :return:
     """
+
     if (not honor_previous) or (honor_previous and current_value == check_value):
         return True
+    return False
 
 
 def _flatten_dict(input_dict: dict, separator='_') -> dict:
     """
-    Deprecated from version 2.3.5; it will be removed entirely by the next minor release.
+    Deprecated from version 2.3.5; it will be removed entirely by the next minor release (version 2.4.x).
 
     Internal use only.
 
@@ -190,7 +200,7 @@ def _flatten_dict(input_dict: dict, separator='_') -> dict:
     :return: The flattened dict.
     """
     warn('"_flatten_dict" has been deprecated from version 2.3.5; '
-         'it will be removed entirely by the next minor release.')
+         'it will be removed entirely by the next minor release (version 2.4.x).')
     source = input_dict.copy()
     flat = {}
     for (key, value) in source.items():
@@ -202,7 +212,7 @@ def _flatten_dict(input_dict: dict, separator='_') -> dict:
     return flat
 
 
-def _safe_theme_list(lf_table) -> list:
+def _safe_theme_list(lf_table: Dict[str, Dict[str, str]]) -> list:
     """
     Internal use only.
 
@@ -213,17 +223,13 @@ def _safe_theme_list(lf_table) -> list:
     :param lf_table: The look and feel table regarding your theme list.
     :return: Error free list of themes.
     """
-    safe_list = []
-    previous_theme = theme()
-    for each_theme in lf_table.keys():
-        if COLOR_SYSTEM_DEFAULT in lf_table[each_theme].values():
-            continue
-        try:
-            theme(each_theme)
-        except TclError:
-            continue
-        safe_list.append(each_theme)
-    theme(previous_theme)
+    safe_list = sorted(
+        [
+            each_theme
+            for each_theme in lf_table.keys()
+            if COLOR_SYSTEM_DEFAULT not in lf_table[each_theme].values()
+        ]
+    )
     return safe_list
 
 
@@ -268,7 +274,8 @@ def _interpolate_colors(
     Inspired by https://www.alanzucconi.com/2016/01/06/colour-interpolation/ .
 
     - RGB interpolation is simple lerping through RGB color space.
-    - Hue interpolation is lerping through HSL color space but moving only forward on the hue scale until it reaches the end color.
+    - Hue interpolation is lerping through HSL color space but moving only forward on the hue scale until it reaches the
+        end color.
     - HSV interpolation also lerps across HSL color space, but it takes the shortest route to get to the end color.
 
     Note: "lerp" means "linear-interpolation", in case you didn't know.
@@ -276,7 +283,6 @@ def _interpolate_colors(
     Each interpolation mode has a different visual effect which may look better than the others in certain scenarios.
 
     First available from v2.3.4.
-
 
     :param start: The starting color.
     :param end: The end color.
@@ -329,6 +335,11 @@ def _recurse_menu(tkmenu: Union[TKMenu, Widget], fg: Union[Color, str], bg: Unio
     :param tkmenu: The Tkinter menu object.
     :return: None
     """
+
+    # This fixes issue #8. Thank you @richnanney!
+    if tkmenu.index('end') is None:
+        return
+
     for index in range(0, tkmenu.index('end') + 1):
         tkmenu.entryconfigure(
             index,
@@ -340,6 +351,89 @@ def _recurse_menu(tkmenu: Union[TKMenu, Widget], fg: Union[Color, str], bg: Unio
     for child in tkmenu.children.values():
         if issubclass(type(child), TKMenu):
             _recurse_menu(child, fg, bg)
+
+
+# COLOR_SYSTEM_DEFAULT HANDLER
+class _ColorSystemDefaultSieve:
+    """
+    Internal use only.
+
+    Handles scenarios where the COLOR_SYSTEM_DEFAULT variable may be encountered.
+
+    Thanks to @macdeport for first reporting it, and @richnanney for frankly making me think of a solution.
+    This solves issues #1 and #7 once and for all.
+
+    First available from v2.3.12.
+    """
+    def __init__(self, window: Window):
+        self.window = window
+        self._TK_COLORS = [
+            'SystemButtonFace',
+            'SystemButtonText',
+            'SystemWindow',
+            'SystemWindowText',
+            'SystemScrollbar',
+        ]
+        self.TK_COLORS = {c: self._tk_colorname_to_color(c) for c in self._TK_COLORS}
+
+        # This dict is used to emulate the themedict of what the GrayGrayGray theme (furthest you can get to default in
+        # PySimpleGUI). However, because defaults go well beyond just the colors in a themedict (they get RESTRICTED to
+        # themedicts when a theme is set), certain parts (such as the headers of Tables and scrollbars) may not be
+        # exactly the same as what you would get with Tkinter-set defaults. For now, this is the next best thing that
+        # can be called a solution to the Default problem. I'll still try to develop a better solution.
+        self.DEFAULTS = {
+            "BACKGROUND":   self.get_tkcolor('SystemButtonFace'),
+            "TEXT":         self.get_tkcolor('SystemButtonText'),
+            "INPUT":        self.get_tkcolor('SystemWindow'),
+            "TEXT_INPUT":   self.get_tkcolor('SystemWindowText'),
+            "SCROLL":       self.get_tkcolor('SystemScrollbar'),
+            "BUTTON":       (self.get_tkcolor('SystemButtonText'), self.get_tkcolor('SystemButtonFace')),
+            "PROGRESS":     DEFAULT_PROGRESS_BAR_COLOR_OFFICIAL,
+        }
+
+    def get_tkcolor(self, colorname):
+        return self.TK_COLORS.get(colorname) or colorname
+
+    def _tk_colorname_to_color(self, colorname):
+        result = Color()
+        result.set_rgb(tuple(x / 65535 for x in self.window.TKroot.winfo_rgb(colorname)))
+        return result.get_hex_l()
+
+    def _sieve_action(self, key, value):
+        if value != COLOR_SYSTEM_DEFAULT:
+            if isinstance(value, (tuple, list)):
+                value = type(value)(map(
+                    lambda index_and_sub_value:
+                    self.get_tkcolor(index_and_sub_value[1]) if index_and_sub_value[1] != COLOR_SYSTEM_DEFAULT
+                    else self.DEFAULTS[key][index_and_sub_value[0]],
+                    enumerate(value)
+                ))
+            elif isinstance(value, str):
+                value = self.get_tkcolor(value)
+            return value
+        else:
+            return self.DEFAULTS[key]
+
+    def sieve_themedict(self, themedict: Dict):
+        return {key: self._sieve_action(key, value) for key, value in themedict.copy().items()}
+
+
+# DEFAULT_PROGRESS_BAR_COMPUTE HANDLER
+def _compute_progressbar(themedict: Dict, create_new_copy: bool = False):
+    """
+    Internal use only.
+
+    Handles the DEFAULT_PROGRESS_BAR_COMPUTE scenario.
+
+    First available from v2.3.12.
+    """
+    if themedict['PROGRESS'] == DEFAULT_PROGRESS_BAR_COMPUTE:
+        themedict = themedict.copy() if create_new_copy else themedict
+        if themedict['BUTTON'][1] != themedict['INPUT'] and themedict['BUTTON'][1] != themedict['BACKGROUND']:
+            themedict['PROGRESS'] = (themedict['BUTTON'][1], themedict['INPUT'])
+        else:
+            themedict['PROGRESS'] = (themedict['TEXT_INPUT'], themedict['INPUT'])
+    return themedict
 
 
 # RESKIN AND UTILITY FUNCTIONS
@@ -373,22 +467,32 @@ def reskin(
     :param reskin_background: True by default. If `True`, the window's background will be affected.
     :return: None
     """
+    # Firstly, we add the window to the mapping of windows that we've encountered thus far.
+    # This mapping is important because it enables us to obtain the previous theme programmatically
+    # at all times, a feature required by Reskinner.
+    if window not in list(WINDOW_THEME_MAP.keys()):
+        WINDOW_THEME_MAP[window] = (theme_function(), lf_table[theme_function()])
+
+    # Obtain the old and new theme names and themedicts.
+    old_theme, old_theme_dict = WINDOW_THEME_MAP[window]
+    new_theme_dict = lf_table[new_theme].copy()
+
+    # Before going any further, we have enough info to disregard redundant calls, so we do so...
+    if (new_theme == old_theme) and (new_theme_dict == old_theme_dict):
+        return
+
+    # COLOR_SYSTEM_DEFAULT Sieve
+    _sieve = _ColorSystemDefaultSieve(window)
+    old_theme_dict = _sieve.sieve_themedict(_compute_progressbar(old_theme_dict))
+    new_theme_dict = _sieve.sieve_themedict(_compute_progressbar(new_theme_dict))
+
     # Handle parameters
     if target_element_keys is not None and exempt_element_keys is not None:
         raise (ReskinnerException('Target elements and Exempt elements can\'t both be specified.'))
     whitelist = [element.key for element in window.element_list()]
     if target_element_keys or exempt_element_keys:
         whitelist = target_element_keys if target_element_keys else \
-            [key for key in whitelist if key not in exempt_element_keys]
-
-    if window not in list(WINDOW_THEME_MAP.keys()):
-        WINDOW_THEME_MAP[window] = (theme_function(), lf_table[theme_function()])
-
-    # Old theme stuff
-    old_theme, old_theme_dict = WINDOW_THEME_MAP[window]
-
-    # New theme stuff
-    new_theme_dict = lf_table[new_theme].copy()
+            list(filter(lambda key: key not in exempt_element_keys, whitelist))
 
     # Window level changes
     if reskin_background:
@@ -397,233 +501,281 @@ def reskin(
     titlebar_row_frame = 'Not Set'
 
     # Per-element changes happen henceforth
-    for element in window.element_list():
-        if element.key in whitelist:
+    for element in filter(lambda element: element.key in whitelist, window.element_list()):
+        # Generic tweaks
+        el = type(element).__name__.lower()
+        '''print(el)'''
+        if element.ParentRowFrame:
+            element.ParentRowFrame.configure(background=new_theme_dict['BACKGROUND'])
+        if _is_element_generic(el) \
+                and _check_for_honors(
+            element.widget.cget('background'),
+            old_theme_dict['BACKGROUND'],
+            honor_previous
+        ):
+            element.widget.configure(background=new_theme_dict['BACKGROUND'])
 
-            # Generic tweaks
-            el = str(type(element)).lower()[:-2].rsplit('.', 1)[1]
-            '''print(el)'''
-            if element.ParentRowFrame:
-                element.ParentRowFrame.configure(background=new_theme_dict['BACKGROUND'])
-            if _check_if_generics_apply(el):
-                element.widget.configure(background=new_theme_dict['BACKGROUND'])
+        # Declare a styler object.
+        styler = Style()
 
-            # Declare a styler object.
-            styler = Style()
+        # Right Click Menus (thanks for pointing this out @dwelden!)
+        if element.TKRightClickMenu:
+            _recurse_menu(
+                element.TKRightClickMenu,
+                new_theme_dict['TEXT_INPUT'],
+                new_theme_dict['INPUT']
+            )
 
-            # Right Click Menus (thanks for pointing this out @dwelden!)
-            if element.TKRightClickMenu:
-                _recurse_menu(element.TKRightClickMenu, new_theme_dict['TEXT_INPUT'], new_theme_dict['INPUT'])
+        # Handling ttk scrollbars
+        element_style_name = getattr(element, 'ttk_style_name')
+        if styler.configure(element_style_name) and ('TScrollbar' in element_style_name):
+            if getattr(element, 'Scrollable', False):
+                digit, rest = getattr(element, 'ttk_style_name').replace('Horizontal', 'Vertical').split('_', 1)
+                digit = str(int(digit) - 1)
+                vertical_style = f'{digit}_{rest}'
+                _configure_ttk_scrollbar_style(vertical_style, styler, new_theme_dict)
+            _configure_ttk_scrollbar_style(getattr(element, 'ttk_style_name'), styler, new_theme_dict)
 
-            # Handling ttk scrollbars
-            if hasattr(element, 'ttk_style_name'):
-                _configure_ttk_scrollbar_style(element.ttk_style_name, styler, new_theme_dict)
-
-            # Elements _________________________________________________________________________________________________
-            # Custom Titlebar
-            if (element.metadata == TITLEBAR_METADATA_MARKER):
-                element.widget.configure(background=new_theme_dict['BUTTON'][1])
-                if element.ParentRowFrame is not None:
-                    element.ParentRowFrame.configure(background=new_theme_dict['BUTTON'][1])
-                titlebar_row_frame = str(element.ParentRowFrame)
-                continue
-
-            # Titlebar elements
-            if str(element.widget).startswith(titlebar_row_frame+'.'):
+        # Elements _________________________________________________________________________________________________
+        # Custom Titlebar
+        if element.metadata == TITLEBAR_METADATA_MARKER:
+            element.widget.configure(background=new_theme_dict['BUTTON'][1])
+            if element.ParentRowFrame is not None:
                 element.ParentRowFrame.configure(background=new_theme_dict['BUTTON'][1])
-                element.widget.configure(background=new_theme_dict['BUTTON'][1])
-                if 'foreground' in element.widget.keys():
-                    element.widget.configure(foreground=new_theme_dict['BUTTON'][0])
-                continue
+            titlebar_row_frame = str(element.ParentRowFrame)
+            continue
 
-            if el in ('text', 'statusbar'):
-                text_fg = element.widget.cget('foreground')
-                text_bg = element.widget.cget('background')
-                if _check_for_honors(text_fg, old_theme_dict['TEXT'], honor_previous):
-                    element.widget.configure(foreground=new_theme_dict['TEXT']),
-                    element.TextColor = new_theme_dict['TEXT']
-                if _check_for_honors(text_bg, old_theme_dict['BACKGROUND'], honor_previous):
-                    element.widget.configure(background=new_theme_dict['BACKGROUND'])
-                    continue
+        # Titlebar elements
+        if str(element.widget).startswith(titlebar_row_frame+'.'):
+            element.ParentRowFrame.configure(background=new_theme_dict['BUTTON'][1])
+            element.widget.configure(background=new_theme_dict['BUTTON'][1])
+            if 'foreground' in element.widget.keys():
+                element.widget.configure(foreground=new_theme_dict['BUTTON'][0])
+            continue
 
-            elif el in ('horizontalseparator', 'verticalseparator'):
+        # Button
+        if el == 'button':
+            # For regular Tk buttons
+            if 'ttk' not in str(type(getattr(element, 'TKButton'))).lower():
+                element.widget.configure(
+                    background=new_theme_dict['BUTTON'][1],
+                    foreground=new_theme_dict['BUTTON'][0],
+                    activebackground=new_theme_dict['BUTTON'][0],
+                    activeforeground=new_theme_dict['BUTTON'][1]
+                )
+            # For Ttk Buttons
+            else:
                 style_name = element.widget.cget('style')
-                styler.configure(style_name, background=new_theme_dict['BACKGROUND'])
-                continue
-
-            elif el == 'frame':
-                element.widget.configure(foreground=new_theme_dict['TEXT'])
-                continue
-
-            elif el == 'menu':
-                _recurse_menu(element.widget, new_theme_dict['TEXT_INPUT'], new_theme_dict['INPUT'])
-                # menudef = getattr(element, 'MenuDefinition')
-                # element.update(menu_definition=menudef)
-                continue
-
-            elif el == 'sizegrip':
-                sizegrip_style = element.widget.cget('style')
-                styler.configure(sizegrip_style, background=new_theme_dict['BACKGROUND'])
-                continue
-
-            elif el == 'optionmenu':
-                element.widget['menu'].configure(foreground=new_theme_dict['TEXT_INPUT'],
-                                                 background=new_theme_dict['INPUT'], )
-                if ALTER_MENU_ACTIVE_COLORS:
-                    element.widget['menu'].configure(
-                        activeforeground=new_theme_dict['INPUT'],
-                        activebackground=new_theme_dict['TEXT_INPUT'],
-                    )
-                element.widget.configure(
-                    foreground=new_theme_dict['TEXT_INPUT'],
-                    background=new_theme_dict['INPUT'],
-                )
-                # activeforeground=new_theme_dict['INPUT'],
-                # activebackground=new_theme_dict['TEXT_INPUT'])
-                continue
-
-            elif el in ('input', 'multiline'):
-                element.widget.configure(
-                    foreground=new_theme_dict['TEXT_INPUT'],
-                    background=new_theme_dict['INPUT'],
-                    selectforeground=new_theme_dict['INPUT'],
-                    selectbackground=new_theme_dict['TEXT_INPUT']
-                )
-                continue
-
-            elif el == 'listbox':
-                element.widget.configure(
-                    foreground=new_theme_dict['TEXT_INPUT'],
-                    background=new_theme_dict['INPUT'],
-                    selectforeground=new_theme_dict['INPUT'],
-                    selectbackground=new_theme_dict['TEXT_INPUT']
-                )
-                continue
-
-            elif el == 'slider':
-                element.widget.configure(foreground=new_theme_dict['TEXT'], troughcolor=new_theme_dict['SCROLL'])
-                continue
-
-            elif el == 'button':
-                # For regular Tk buttons
-                if 'ttk' not in str(type(getattr(element, 'TKButton'))).lower():
-                    element.widget.configure(
-                        background=new_theme_dict['BUTTON'][1],
-                        foreground=new_theme_dict['BUTTON'][0],
-                        activebackground=new_theme_dict['BUTTON'][0],
-                        activeforeground=new_theme_dict['BUTTON'][1]
-                    )
-                # For Ttk Buttons
-                else:
-                    style_name = element.widget.cget('style')
-                    styler.configure(
-                        f'{style_name}',
-                        background=new_theme_dict['BUTTON'][1],
-                        foreground=new_theme_dict['BUTTON'][0]
-                    )
-                    styler.map(
-                        style_name,
-                        foreground=[
-                            ('pressed', new_theme_dict['BUTTON'][1]),
-                            ('active', new_theme_dict['BUTTON'][1])
-                        ],
-                        background=[
-                            ('pressed', new_theme_dict['BUTTON'][0]),
-                            ('active', new_theme_dict['BUTTON'][0])
-                        ]
-                    )
-                    continue
-                    
-            elif el == 'progressbar':
-                style_name = getattr(element, 'TKProgressBar').style_name
                 styler.configure(
-                    style_name, background=new_theme_dict['PROGRESS'][1],
-                    troughcolor=new_theme_dict['PROGRESS'][0])
-                continue
-
-            elif el == 'buttonmenu':
-                element.widget.configure(
+                    f'{style_name}',
                     background=new_theme_dict['BUTTON'][1],
                     foreground=new_theme_dict['BUTTON'][0]
-                )
-                _recurse_menu(element.TKMenu, fg=new_theme_dict['TEXT_INPUT'], bg=new_theme_dict['INPUT'])
-                continue
-
-            elif el in 'spin':
-                element.widget.configure(
-                    background=new_theme_dict['INPUT'],
-                    foreground=new_theme_dict['TEXT_INPUT'],
-                    buttonbackground=new_theme_dict['INPUT']
-                )
-                continue
-
-            elif el == 'combo':
-                # Configuring the listbox of the combo.
-                prefix = '$popdown.f.l configure'
-                window.TKroot.tk.call('eval', f'set popdown [ttk::combobox::PopdownWindow {element.widget}]')
-                window.TKroot.tk.call('eval', f"{prefix} -background {new_theme_dict['INPUT']}")
-                window.TKroot.tk.call('eval', f"{prefix} -foreground {new_theme_dict['TEXT_INPUT']}")
-                window.TKroot.tk.call('eval', f"{prefix} -selectforeground {new_theme_dict['INPUT']}")
-                window.TKroot.tk.call('eval', f"{prefix} -selectbackground {new_theme_dict['TEXT_INPUT']}")
-                style_name = element.widget.cget('style')
-                # Configuring the combo itself.
-                styler.configure(
-                    style_name,
-                    selectforeground=new_theme_dict['INPUT'],
-                    selectbackground=new_theme_dict['TEXT_INPUT'],
-                    selectcolor=new_theme_dict['TEXT_INPUT'],
-                    fieldbackground=new_theme_dict['INPUT'],
-                    foreground=new_theme_dict['TEXT_INPUT'],
-                    background=new_theme_dict['BUTTON'][1],
-                    arrowcolor=new_theme_dict['BUTTON'][0],
                 )
                 styler.map(
                     style_name,
                     foreground=[
-                        ('readonly', new_theme_dict['TEXT_INPUT']),
-                        ('disabled', DISABLED_COLOR)
+                        ('pressed', new_theme_dict['BUTTON'][1]),
+                        ('active', new_theme_dict['BUTTON'][1])
                     ],
-                    fieldbackground=[
-                        ('readonly', new_theme_dict['INPUT'])
+                    background=[
+                        ('pressed', new_theme_dict['BUTTON'][0]),
+                        ('active', new_theme_dict['BUTTON'][0])
                     ]
                 )
                 continue
 
-            elif el in ('table', 'tree'):
-                style_name = element.widget.cget('style')
-                styler.configure(style_name, foreground=new_theme_dict['TEXT'], background=new_theme_dict['BACKGROUND'],
-                                 fieldbackground=new_theme_dict['BACKGROUND'], fieldcolor=new_theme_dict['TEXT'])
-                styler.map(style_name, foreground=[('selected', new_theme_dict['BUTTON'][0])],
-                           background=[('selected', new_theme_dict['BUTTON'][1])])
-                styler.configure(f'{style_name}.Heading', foreground=new_theme_dict['TEXT_INPUT'],
-                                 background=new_theme_dict['INPUT'])
-                continue
+        # ButtonMenu
+        elif el == 'buttonmenu':
+            element.widget.configure(
+                background=new_theme_dict['BUTTON'][1],
+                foreground=new_theme_dict['BUTTON'][0]
+            )
+            if hasattr(element, 'TKMenu'):
+                _recurse_menu(element.TKMenu, fg=new_theme_dict['TEXT_INPUT'], bg=new_theme_dict['INPUT'])
+            continue
 
-            elif el in ('radio', 'checkbox'):
-                toggle = _calculate_checkbox_or_radio_color(new_theme_dict['BACKGROUND'], new_theme_dict['TEXT'])
-                element.widget.configure(background=new_theme_dict['BACKGROUND'], foreground=new_theme_dict['TEXT'],
-                                         selectcolor=toggle,
-                                         activebackground=new_theme_dict['BACKGROUND'],
-                                         activeforeground=new_theme_dict['TEXT'])
-                continue
+        # Column (Scrollable)
+        elif el == 'column' and hasattr(element, 'TKColFrame'):
+            if hasattr(element.TKColFrame, 'canvas'):  # This means the column is scrollable.
+                element.TKColFrame.canvas.configure(background=new_theme_dict['BACKGROUND'])
+                element.TKColFrame.configure(background=new_theme_dict['BACKGROUND'])
+                element.TKColFrame.canvas.children['!frame'].configure(
+                    background=new_theme_dict['BACKGROUND']
+                )
+            continue
 
-            elif el == 'tabgroup':
-                style_name = element.widget.cget('style')
-                styler.configure(f'{style_name}', background=new_theme_dict['BACKGROUND'])
-                styler.configure(f'{style_name}.Tab',
-                                 background=new_theme_dict['INPUT'],
-                                 foreground=new_theme_dict['TEXT_INPUT'])
-                styler.map(f'{style_name}.Tab',
-                           foreground=[
-                               ('pressed', new_theme_dict['BUTTON'][1]),
-                               ('selected', new_theme_dict['TEXT'])
-                           ],
-                           background=[
-                               ('pressed', new_theme_dict['BUTTON'][0]),
-                               ('selected', new_theme_dict['BACKGROUND'])
-                           ]
-                           )
-                continue
+        # Combo
+        elif el == 'combo':
+            # Configuring the listbox of the combo.
+            prefix = '$popdown.f.l configure'
+            window.TKroot.tk.call('eval', f'set popdown [ttk::combobox::PopdownWindow {element.widget}]')
+            window.TKroot.tk.call('eval', f"{prefix} -background {new_theme_dict['INPUT']}")
+            window.TKroot.tk.call('eval', f"{prefix} -foreground {new_theme_dict['TEXT_INPUT']}")
+            window.TKroot.tk.call('eval', f"{prefix} -selectforeground {new_theme_dict['INPUT']}")
+            window.TKroot.tk.call('eval', f"{prefix} -selectbackground {new_theme_dict['TEXT_INPUT']}")
+            style_name = element.widget.cget('style')
+            # Configuring the combo itself.
+            styler.configure(
+                style_name,
+                selectforeground=new_theme_dict['INPUT'],
+                selectbackground=new_theme_dict['TEXT_INPUT'],
+                selectcolor=new_theme_dict['TEXT_INPUT'],
+                fieldbackground=new_theme_dict['INPUT'],
+                foreground=new_theme_dict['TEXT_INPUT'],
+                background=new_theme_dict['BUTTON'][1],
+                arrowcolor=new_theme_dict['BUTTON'][0],
+            )
+            styler.map(
+                style_name,
+                foreground=[
+                    ('readonly', new_theme_dict['TEXT_INPUT']),
+                    ('disabled', DISABLED_COLOR)
+                ],
+                fieldbackground=[
+                    ('readonly', new_theme_dict['INPUT'])
+                ]
+            )
+            continue
+
+        # Frame
+        elif el == 'frame':
+            element.widget.configure(foreground=new_theme_dict['TEXT'])
+            continue
+
+        # Listbox
+        elif el == 'listbox':
+            element.widget.configure(
+                foreground=new_theme_dict['TEXT_INPUT'],
+                background=new_theme_dict['INPUT'],
+                selectforeground=new_theme_dict['INPUT'],
+                selectbackground=new_theme_dict['TEXT_INPUT']
+            )
+            continue
+
+        # Menu
+        elif el == 'menu':
+            _recurse_menu(
+                element.widget,
+                new_theme_dict['TEXT_INPUT'],
+                new_theme_dict['INPUT']
+            )
+            continue
+
+        # OptionMenu
+        elif el == 'optionmenu':
+            element.widget['menu'].configure(foreground=new_theme_dict['TEXT_INPUT'],
+                                             background=new_theme_dict['INPUT'], )
+            if ALTER_MENU_ACTIVE_COLORS:
+                element.widget['menu'].configure(
+                    activeforeground=new_theme_dict['INPUT'],
+                    activebackground=new_theme_dict['TEXT_INPUT'],
+                )
+            element.widget.configure(
+                foreground=new_theme_dict['TEXT_INPUT'],
+                background=new_theme_dict['INPUT'],
+            )
+            # activeforeground=new_theme_dict['INPUT'],
+            # activebackground=new_theme_dict['TEXT_INPUT'])
+            continue
+
+        # ProgressBar
+        elif el == 'progressbar':
+            style_name = getattr(element, 'TKProgressBar').style_name
+            styler.configure(
+                style_name,
+                background=new_theme_dict['PROGRESS'][0],
+                troughcolor=new_theme_dict['PROGRESS'][1]
+            )
+            continue
+
+        # Sizegrip
+        elif el == 'sizegrip':
+            sizegrip_style = element.widget.cget('style')
+            styler.configure(sizegrip_style, background=new_theme_dict['BACKGROUND'])
+            continue
+
+        # Slider
+        elif el == 'slider':
+            element.widget.configure(
+                foreground=new_theme_dict['TEXT'],
+                troughcolor=new_theme_dict['SCROLL']
+            )
+            continue
+
+        # Spin
+        elif el in 'spin':
+            element.widget.configure(
+                background=new_theme_dict['INPUT'],
+                foreground=new_theme_dict['TEXT_INPUT'],
+                buttonbackground=new_theme_dict['INPUT']
+            )
+            continue
+
+        # TabGroup
+        elif el == 'tabgroup':
+            style_name = element.widget.cget('style')
+            styler.configure(f'{style_name}', background=new_theme_dict['BACKGROUND'])
+            styler.configure(f'{style_name}.Tab',
+                             background=new_theme_dict['INPUT'],
+                             foreground=new_theme_dict['TEXT_INPUT'])
+            styler.map(f'{style_name}.Tab',
+                       foreground=[
+                           ('pressed', new_theme_dict['BUTTON'][1]),
+                           ('selected', new_theme_dict['TEXT'])
+                       ],
+                       background=[
+                           ('pressed', new_theme_dict['BUTTON'][0]),
+                           ('selected', new_theme_dict['BACKGROUND'])
+                       ]
+                       )
+            continue
+
+        # Checkbox, Radio
+        elif el in ('checkbox', 'radio'):
+            toggle = _calculate_checkbox_or_radio_color(new_theme_dict['BACKGROUND'], new_theme_dict['TEXT'])
+            element.widget.configure(background=new_theme_dict['BACKGROUND'], foreground=new_theme_dict['TEXT'],
+                                     selectcolor=toggle,
+                                     activebackground=new_theme_dict['BACKGROUND'],
+                                     activeforeground=new_theme_dict['TEXT'])
+            continue
+
+        # HorizontalSeparator, VerticalSeparator
+        elif el in ('horizontalseparator', 'verticalseparator'):
+            style_name = element.widget.cget('style')
+            styler.configure(style_name, background=new_theme_dict['BACKGROUND'])
+            continue
+
+        # Input, Multiline
+        elif el in ('input', 'multiline'):
+            element.widget.configure(
+                foreground=new_theme_dict['TEXT_INPUT'],
+                background=new_theme_dict['INPUT'],
+                selectforeground=new_theme_dict['INPUT'],
+                selectbackground=new_theme_dict['TEXT_INPUT']
+            )
+            continue
+
+        # StatusBar, Text
+        elif el in ('statusbar', 'text'):
+            text_fg = _sieve.get_tkcolor(element.widget.cget('foreground'))
+            text_bg = _sieve.get_tkcolor(element.widget.cget('background'))
+            if _check_for_honors(text_fg, old_theme_dict['TEXT'], honor_previous):
+                element.widget.configure(foreground=new_theme_dict['TEXT']),
+                element.TextColor = new_theme_dict['TEXT']
+            if _check_for_honors(text_bg, old_theme_dict['BACKGROUND'], honor_previous):
+                element.widget.configure(background=new_theme_dict['BACKGROUND'])
+            continue
+
+        # Table, Tree
+        elif el in ('table', 'tree'):
+            style_name = element.widget.cget('style')
+            styler.configure(style_name, foreground=new_theme_dict['TEXT'], background=new_theme_dict['BACKGROUND'],
+                             fieldbackground=new_theme_dict['BACKGROUND'], fieldcolor=new_theme_dict['TEXT'])
+            styler.map(style_name, foreground=[('selected', new_theme_dict['BUTTON'][0])],
+                       background=[('selected', new_theme_dict['BUTTON'][1])])
+            styler.configure(f'{style_name}.Heading', foreground=new_theme_dict['TEXT_INPUT'],
+                             background=new_theme_dict['INPUT'])
+            continue
 
     WINDOW_THEME_MAP[window] = (new_theme, new_theme_dict)
     if set_future:
@@ -636,7 +788,7 @@ def animated_reskin(
         new_theme: str,
         theme_function: Callable,
         lf_table: dict,
-        duration: int = 3000,
+        duration: int = DEFAULT_ANIMATED_RESKIN_DURATION,
         interpolation_mode: Union[
             RGB_INTERPOLATION,
             HUE_INTERPOLATION,
@@ -680,8 +832,11 @@ def animated_reskin(
     """
     if window not in list(WINDOW_THEME_MAP.keys()):
         WINDOW_THEME_MAP[window] = (theme_function(), lf_table[theme_function()])
+    sieve = _ColorSystemDefaultSieve(window)
     old_themedict = WINDOW_THEME_MAP[window][1]
+    old_themedict = sieve.sieve_themedict(_compute_progressbar(old_themedict.copy()))
     new_themedict = lf_table[new_theme]
+    new_themedict = sieve.sieve_themedict(_compute_progressbar(new_themedict.copy()))
     # print(WINDOW_THEME_MAP[window][0], new_theme, theme_function())
     # micro = float(str(timedelta(milliseconds=duration)).rsplit(':', 1)[1])
     call_time = dt.now()
@@ -794,12 +949,6 @@ def toggle_transparency(window: Window) -> None:
 
 
 # MAIN FUNCTION
-
-# Required because certain themes currently cause this error:
-#   _tkinter.TclError: unknown color name "1234567890"
-safethemes = _safe_theme_list(LOOK_AND_FEEL_TABLE)
-
-
 def main():
     """
     Main Function.
@@ -808,42 +957,54 @@ def main():
 
     First available from v1.0.0.
     """
-    from psg_reskinner import reskin, animated_reskin, __version__
-    from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, LOOK_AND_FEEL_TABLE, TIMEOUT_KEY
+    # % START DEMO % #
+    # from psg_reskinner import animated_reskin, __version__
+    from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, theme_list, LOOK_AND_FEEL_TABLE
     from random import choice as rc
 
-    rmenu = ['', [['Hi', ['Next Level', ['Deeper Level', ['a', 'b', 'c']], 'Hoho']], 'There']]
+    right_click_menu = ['', [['Hi', ['Next Level', ['Deeper Level', ['a', 'b', 'c']], 'Hoho']], 'There']]
 
     window_layout = [
         [Titlebar('Reskinner Demo')],
         [Text('Hello!', font=('Helvetica', 20))],
         [Text('You are currently running Reskinner instead of importing it.')],
-        [Text('The theme of this window changes every 3 seconds.')],
+        [Text('The theme of this window changes every 2 seconds.')],
         [Text('Changing to:')],
-        [Button('DarkBlue3', k='ctheme', font=('Helvetica', 16), right_click_menu=rmenu)],
+        [Button('DarkBlue3', k='current_theme', font=('Helvetica', 16), right_click_menu=right_click_menu)],
         [Text(f'Reskinner v{__version__}', font=('Helvetica', 8), pad=(0, 0)), Push()],
     ]
 
-    window = Window('Reskinner Demo', window_layout, element_justification='center')
+    window = Window('Reskinner Demo', window_layout, element_justification='center', keep_on_top=True)
+
+    def _reskin_job():
+        themes = theme_list()
+        themes.remove(theme())
+        new = rc(themes)
+        window['current_theme'].update(new)
+        animated_reskin(
+            window=window,
+            new_theme=new,
+            theme_function=theme,
+            lf_table=LOOK_AND_FEEL_TABLE,
+        )
+        window.TKroot.after(2000, _reskin_job)
+
+    started = False
 
     while True:
 
-        e, v = window.Read(timeout=2000)
+        e, v = window.read(timeout=2000)
 
         if e in (None, 'Exit'):
             window.Close()
             break
 
-        elif e == TIMEOUT_KEY:
-            '''reskin(window, rc(theme_list()), theme, LOOK_AND_FEEL_TABLE)'''
-            new = rc(safethemes)
-            window['ctheme'].update(new)
-            animated_reskin(
-                window=window,
-                new_theme=new,
-                theme_function=theme,
-                lf_table=LOOK_AND_FEEL_TABLE,
-            )
+        if not started:
+            _reskin_job()
+            started = True
+
+    # % END DEMO % #
+    return
 
 
 # ENTRY POINT
