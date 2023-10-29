@@ -6,17 +6,21 @@ from os.path import abspath, split, sep
 from subprocess import run
 
 from bumpver.version import parse_version
+
 from import_util import import_by_file
 
-VERSION = (import_by_file('psg_reskinner', '..')).__version__
-print(f'Working with Reskinner v{VERSION}.')
+psg_reskinner = import_by_file("psg_reskinner", "../")
 
-DEFAULT_UPLOAD_DESTINATION = 'legacy'
-DEFAULT_OUTPUT_DIR = f'dist/v{parse_version(VERSION).major}/{VERSION}'
+VERSION = psg_reskinner.version.__version__
+print(f"Working with Reskinner v{VERSION}.")
+
+DEFAULT_UPLOAD_DESTINATION = "legacy"
+DEFAULT_OUTPUT_DIR = f"dist/v{parse_version(VERSION).version[0]}/{VERSION}"
 FILE_DIR = abspath(split(__file__)[0])
 WORKING_DIR = abspath(FILE_DIR.rsplit(sep, 1)[0])
+print(WORKING_DIR)
 
-with open(f'{FILE_DIR}/.env', 'r') as env:
+with open(f"{FILE_DIR}/.env", "r") as env:
     TOKEN = env.readline()
 
 
@@ -24,17 +28,17 @@ def build():
     """
     Builds the project.
     """
-    print('Building...')
-    run(f'python -m build -n --outdir=./{DEFAULT_OUTPUT_DIR}/', cwd=WORKING_DIR)
+    print("Building...")
+    run(f"python -m build -n --outdir=./{DEFAULT_OUTPUT_DIR}/", cwd=WORKING_DIR)
 
 
-def commit(message: str = f'New Commit at {datetime.now()}'):
+def commit(message: str = f"New Commit at {datetime.now()}"):
     """
     Commits files to local repository.
     """
-    print('Staging commit...')
+    print("Staging commit...")
     run(f'git commit -m "{message}" -a', cwd=WORKING_DIR)
-    print('Commit completed successfully.')
+    print("Commit completed successfully.")
 
 
 def upload_testpypi(version: str = VERSION):
@@ -42,8 +46,11 @@ def upload_testpypi(version: str = VERSION):
     Uploads the project to PyPi's test server.
     :param version: The specific version to upload.
     """
-    print('Uploading to TestPyPi...')
-    run(f'twine upload --username __token__ --password {TOKEN} --repository testpypi {DEFAULT_OUTPUT_DIR}/psg_reskinner-{version}*', cwd=WORKING_DIR)
+    print("Uploading to TestPyPi...")
+    run(
+        f"twine upload --username __token__ --password {TOKEN} --repository testpypi {DEFAULT_OUTPUT_DIR}/psg_reskinner-{version}*",
+        cwd=WORKING_DIR,
+    )
 
 
 def upload_legacy(version: str = VERSION):
@@ -51,8 +58,11 @@ def upload_legacy(version: str = VERSION):
     Uploads the project to PyPi's legacy servers.
     :param version: The specific version to upload.
     """
-    print('Uploading to PyPi...')
-    run(f'twine upload --username __token__ --password {TOKEN} --repository-url https://upload.pypi.org/legacy/ {DEFAULT_OUTPUT_DIR}/psg_reskinner-{version}*', cwd=WORKING_DIR)
+    print("Uploading to PyPi...")
+    run(
+        f"twine upload --username __token__ --password {TOKEN} --repository-url https://upload.pypi.org/legacy/ {DEFAULT_OUTPUT_DIR}/psg_reskinner-{version}*",
+        cwd=WORKING_DIR,
+    )
 
 
 def bumpver(major: bool = False, minor: bool = False, patch: bool = True):
@@ -61,11 +71,11 @@ def bumpver(major: bool = False, minor: bool = False, patch: bool = True):
 
     Bumps the version a notch using the BumpVer tool.
     """
-    print('Updating version...')
+    print("Updating version...")
     if sum([major, minor, patch]) != 1:
-        raise Exception('One (and only one) of major, minor or patch must be set!')
-    target = 'major' if major else 'minor' if minor else 'patch'
-    run(f'bumpver update --{target}', cwd=WORKING_DIR)
+        raise Exception("One (and only one) of major, minor or patch must be set!")
+    target = "major" if major else "minor" if minor else "patch"
+    run(f"bumpver update --{target}", cwd=WORKING_DIR)
 
 
 def update_demo():
@@ -74,7 +84,7 @@ def update_demo():
 
     Updates the README with the demo code.
     """
-    run('python demo_updater.py')
+    run("python demo_updater.py")
 
 
 def update_description_year():
@@ -83,12 +93,12 @@ def update_description_year():
 
     Updates the copyright year of the DESCRIPTION.
     """
-    run('python description_year_updater.py')
+    run("python description_year_updater.py")
 
 
 update_demo()
 update_description_year()
-commit()
+# commit()
 # bumpver()
 build()
-upload_legacy()
+# upload_legacy()

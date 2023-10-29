@@ -1,4 +1,5 @@
 .env
+.history
 .idea
 .mypy_cache
 __pycache__
