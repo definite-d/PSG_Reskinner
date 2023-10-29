@@ -5,6 +5,7 @@ from datetime import datetime
 from os.path import abspath, split, sep
 from subprocess import run
 
+from bumpver import __version__ as bvv
 from bumpver.version import parse_version
 
 from import_util import import_by_file
@@ -12,6 +13,8 @@ from import_util import import_by_file
 psg_reskinner = import_by_file("psg_reskinner", "../")
 
 VERSION = psg_reskinner.version.__version__
+print(parse_version(VERSION).version)
+print(bvv)
 print(f"Working with Reskinner v{VERSION}.")
 
 DEFAULT_UPLOAD_DESTINATION = "legacy"
