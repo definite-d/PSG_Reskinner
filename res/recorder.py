@@ -10,21 +10,21 @@ from typing import Callable
 
 from import_util import import_by_file
 
-psg_reskinner = import_by_file('psg_reskinner', '..')
+psg_reskinner = import_by_file("psg_reskinner", "..")
 reskin = psg_reskinner.reskin
 animated_reskin = psg_reskinner.animated_reskin
-__version__ = psg_reskinner.__version__
+__version__ = psg_reskinner.version.__version__
 
-SHORTCUT: str = 'Ctrl+Shift+Alt+S'
-_main: Callable = psg_reskinner.__main__.main
-lines: str = getsource(_main).replace('\n', '\\n')
-window_line: str = re.search(r'window = Window\([^)]*\)', lines).group()
-modified_code: str = f'''
+SHORTCUT: str = "Ctrl+Shift+Alt+S"
+_main: Callable = psg_reskinner.psg_reskinner.main
+lines: str = getsource(_main).replace("\n", "\\n")
+window_line: str = re.search(r"window = Window\([^)]*\)", lines).group()
+modified_code: str = f"""
     {window_line}
     from keyboard import send
     default_theme = theme()
     themes = [default_theme, 'Black', 'DarkTanBlue', 'GrayGrayGray', 'DarkRed1', 'Reds', 'DarkGrey12', 
-              'DarkBlue12', 'Topanga', 'DarkTeal6']
+              'DarkBlue12', 'Topanga', 'SystemDefaultForReal', 'NeonGreen1']
 
     def _reskin_job():
         new = themes.pop()
@@ -58,8 +58,10 @@ modified_code: str = f'''
 
     # % END DEMO % #
     # return
-'''
-newlines = re.sub(r'\\n    window = Window\([^)]*\).*', modified_code, lines).replace('\\n', '\n')
+"""
+newlines = re.sub(r"\\n    window = Window\([^)]*\).*", modified_code, lines).replace(
+    "\\n", "\n"
+)
 exec(newlines)
 
 main()
