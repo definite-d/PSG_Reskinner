@@ -49,6 +49,6 @@ push = true
     "Version {version}",
 ]
 "psg_reskinner/version.py" = [
-    "__version__: str = '{version}'"
+    '__version__: str = "{version}"'
 ]
 
