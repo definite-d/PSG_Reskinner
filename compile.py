@@ -94,7 +94,7 @@ def format_source_files():
         run_formatting(file_)
 
 
-def bumpver(major: bool = False, minor: bool = False, patch: bool = True):
+def bumpver(major: bool = True, minor: bool = False, patch: bool = False):
     """
     Internal use only.
 
