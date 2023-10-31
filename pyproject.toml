@@ -9,7 +9,7 @@ version = "2.3.13"
 readme = "./res/DESCRIPTION.md"
 authors = [{ name = "Divine U. Afam-Ifediogor", email = "divineafam@gmail.com" }]
 license = { file = "LICENSE" }
-classifiers=[
+classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -48,7 +48,7 @@ push = true
 "./res/README_DRY.md" = [
     "Version {version}",
 ]
-"psg_reskinner/__main__.py" = [
+"psg_reskinner/version.py" = [
     "__version__: str = '{version}'"
 ]
 

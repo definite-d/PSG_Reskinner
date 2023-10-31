@@ -1,27 +1,49 @@
 """
 Build script for psg_reskinner.
 """
+#  PSG_Reskinner
+#
+#  Enables changing the themes of your PySimpleGUI windows and elements
+#  instantaneously on the fly without the need for re-instantiating the window.
+#
+#  MIT License
+#
+#  Copyright (c) 2023 Divine Afam-Ifediogor
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+
 from datetime import datetime
 from os.path import abspath, split, sep
 from subprocess import run
-
-from bumpver import __version__ as bvv
-from bumpver.version import parse_version
 
 from import_util import import_by_file
 
 psg_reskinner = import_by_file("psg_reskinner", "../")
 
 VERSION = psg_reskinner.version.__version__
-print(parse_version(VERSION).version)
-print(bvv)
+major, minor, patch = map(lambda x: int(x), VERSION.split("."))
 print(f"Working with Reskinner v{VERSION}.")
 
 DEFAULT_UPLOAD_DESTINATION = "legacy"
-DEFAULT_OUTPUT_DIR = f"dist/v{parse_version(VERSION).version[0]}/{VERSION}"
+DEFAULT_OUTPUT_DIR = f"dist/v{major}/{VERSION}"
 FILE_DIR = abspath(split(__file__)[0])
 WORKING_DIR = abspath(FILE_DIR.rsplit(sep, 1)[0])
-print(WORKING_DIR)
 
 with open(f"{FILE_DIR}/.env", "r") as env:
     TOKEN = env.readline()
@@ -102,6 +124,6 @@ def update_description_year():
 update_demo()
 update_description_year()
 # commit()
-# bumpver()
+bumpver()
 build()
 # upload_legacy()

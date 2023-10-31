@@ -1,34 +1,78 @@
-from datetime import timedelta, datetime
+#  PSG_Reskinner
+#
+#  Enables changing the themes of your PySimpleGUI windows and elements
+#  instantaneously on the fly without the need for re-instantiating the window.
+#
+#  MIT License
+#
+#  Copyright (c) 2023 Divine Afam-Ifediogor
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+
+#  PSG_Reskinner
+#
+#  Enables changing the themes of your PySimpleGUI windows and elements
+#  instantaneously on the fly without the need for re-instantiating the window.
+#
+#  MIT License
+#
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#
+from datetime import datetime, timedelta
 from tkinter import TclError
-from tkinter.ttk import Style, Widget as TTKWidget
+from tkinter.ttk import Style
+from tkinter.ttk import Widget as TTKWidget
 from typing import Callable, Optional, Union
 
 from PySimpleGUI import (
-    Window,
-    Element,
     TITLEBAR_METADATA_MARKER,
+    Checkbox,
     Column,
     Combo,
+    Element,
     OptionMenu,
-    Checkbox,
-    Radio,
-    Tree,
-    Table,
     ProgressBar,
+    Radio,
+    Table,
+    Tree,
+    Window,
 )
 
-from psg_reskinner.colorprocessor import ColorProcessor
-from psg_reskinner.constants import (
-    WINDOW_THEME_MAP,
+from .colorprocessor import ColorProcessor
+from .constants import (
     ALTER_MENU_ACTIVE_COLORS,
-    RGB_INTERPOLATION,
-    HUE_INTERPOLATION,
-    HSL_INTERPOLATION,
     DEFAULT_ANIMATED_RESKIN_DURATION,
+    HSL_INTERPOLATION,
+    HUE_INTERPOLATION,
+    RGB_INTERPOLATION,
+    WINDOW_THEME_MAP,
 )
-from psg_reskinner.deprecation import deprecation_trigger
-from psg_reskinner.utilities import _lower_class_name
-from psg_reskinner.version import __version__
+from .deprecation import deprecation_trigger
+from .utilities import _lower_class_name
+from .version import __version__
 
 # DEPRECATION TRIGGER
 deprecation_trigger()
@@ -449,17 +493,18 @@ def main():
     """
     # % START DEMO % #
     # from psg_reskinner import animated_reskin, reskin, __version__
+    from random import choice as rc
+
     from PySimpleGUI import (
-        Window,
-        Text,
+        LOOK_AND_FEEL_TABLE,
         Button,
         Push,
+        Text,
         Titlebar,
+        Window,
         theme,
         theme_list,
-        LOOK_AND_FEEL_TABLE,
     )
-    from random import choice as rc
 
     right_click_menu = [
         "",

@@ -1,34 +1,79 @@
+#  PSG_Reskinner
+#
+#  Enables changing the themes of your PySimpleGUI windows and elements
+#  instantaneously on the fly without the need for re-instantiating the window.
+#
+#  MIT License
+#
+#  Copyright (c) 2023 Divine Afam-Ifediogor
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+
+#  PSG_Reskinner
+#
+#  Enables changing the themes of your PySimpleGUI windows and elements
+#  instantaneously on the fly without the need for re-instantiating the window.
+#
+#  MIT License
+#
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#
 from functools import cache
-from tkinter import Frame as TKFrame, Menu as TKMenu, Widget
+from tkinter import Frame as TKFrame
+from tkinter import Menu as TKMenu
+from tkinter import Widget
 from tkinter.ttk import Style
-from typing import Union, Callable, Dict, Any, Tuple
+from typing import Any, Callable, Dict, Tuple, Union
 
 from PySimpleGUI import (
     COLOR_SYSTEM_DEFAULT,
-    Combo,
     DEFAULT_PROGRESS_BAR_COMPUTE,
+    Checkbox,
+    Column,
+    Combo,
     Element,
     OptionMenu,
+    ProgressBar,
+    Radio,
+    Table,
+    Tree,
     Window,
     rgb,
-    Column,
-    Checkbox,
-    Radio,
-    Tree,
-    Table,
-    ProgressBar,
 )
 from PySimpleGUI.PySimpleGUI import _hex_to_hsl, _hsl_to_rgb  # noqa
 from colour import Color
 
 from .constants import (
-    RGB_INTERPOLATION,
-    HUE_INTERPOLATION,
     HSL_INTERPOLATION,
-    SCROLLBAR_TROUGH_COLOR,
-    SCROLLBAR_FRAME_COLOR,
-    SCROLLBAR_BACKGROUND_COLOR,
+    HUE_INTERPOLATION,
+    RGB_INTERPOLATION,
     SCROLLBAR_ARROW_COLOR,
+    SCROLLBAR_BACKGROUND_COLOR,
+    SCROLLBAR_FRAME_COLOR,
+    SCROLLBAR_TROUGH_COLOR,
 )
 from .default import _default_elements, _default_window
 from .utilities import _lower_class_name, clamp
