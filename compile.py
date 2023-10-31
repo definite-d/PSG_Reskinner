@@ -16,18 +16,21 @@ and a working install of `git`.
 import re
 from datetime import datetime
 from inspect import getsourcelines
-from os import system as run, environ as env
+from os import system as run
 from pathlib import Path
 
-from dotenv import load_dotenv
 from semver import Version
 
 from psg_reskinner.psg_reskinner import main
 from psg_reskinner.version import __version__ as VERSION
 
 print("Starting the Compiler Script...")
-load_dotenv()
 
+env = {}
+with open("./res/.env", "r") as _env:
+    for line in _env.readlines():
+        var, value = line.split("=")
+        env[var] = value
 
 # SOURCE_FOLDER = Path("./psg_reskinner copy")
 SOURCE_FOLDER = Path("./psg_reskinner")
@@ -162,5 +165,5 @@ def update_copyright_year(filepath: str):
 # format_source_files()
 # build()
 # git_push()
-upload_legacy()
-print("compile.py has completed execution.")
+# upload_legacy()
+# print("compile.py has completed execution.")
