@@ -26,7 +26,7 @@ Please consider starring the project if you find it useful.
 ## Example Usage (Demo)
 
 ```python
-# Reskinner Version 3.0.1
+# Reskinner Version 3.0.2
 # Demo code goes here. Run the update to hydrate it.
 ```
 

@@ -26,7 +26,7 @@ Please consider starring the project if you find it useful.
 ## Example Usage (Demo)
 
 ```python
-# Reskinner Version 3.0.1
+# Reskinner Version 3.0.2
 from psg_reskinner import animated_reskin, reskin, __version__
 from random import choice as rc
 
