@@ -33,7 +33,6 @@ load_dotenv()
 SOURCE_FOLDER = Path("./psg_reskinner")
 DEFAULT_UPLOAD_DESTINATION = "legacy"
 DEFAULT_OUTPUT_DIR = f"dist/v{Version.parse(VERSION).major}/{VERSION}"
-print(DEFAULT_OUTPUT_DIR)
 
 DRY_README_PATH = "./res/README_DRY.md"
 README_PATH = "./README.md"
@@ -161,7 +160,7 @@ def update_copyright_year(filepath: str):
 # update_demo()
 # bumpver()
 # format_source_files()
-build()
-git_push()
-# upload_legacy()
+# build()
+# git_push()
+upload_legacy()
 print("compile.py has completed execution.")
