@@ -1,30 +1,33 @@
 """
 This script is used to run the demo and automatically record a GIF of the demo window,
 then save the GIF. It relies on ShareX, and the shortcut for GIF recording being set to
-Ctrl+Shift+Alt+S.
-Have ShareX open and the shortcout key set for this script to work well.
+Ctrl+Shift+Alt+R.
+Have ShareX open and the shortcut key set for this script to work well.
 """
 import re
 from inspect import getsource
+
+from psg_reskinner.psg_reskinner import main
+
+exec(
+    """
+from pyautogui import press
 from typing import Callable
+from psg_reskinner import reskin, animated_reskin, __version__
+    """
+)
 
-from import_util import import_by_file
+SHORTCUT: str = "Ctrl+Shift+Alt+R"
+from keyboard import press
 
-psg_reskinner = import_by_file("psg_reskinner", "..")
-reskin = psg_reskinner.reskin
-animated_reskin = psg_reskinner.animated_reskin
-__version__ = psg_reskinner.version.__version__
-
-SHORTCUT: str = "Ctrl+Shift+Alt+S"
-_main: Callable = psg_reskinner.psg_reskinner.main
-lines: str = getsource(_main).replace("\n", "\\n")
+press(SHORTCUT)
+lines: str = getsource(main).replace("\n", "\\n")
 window_line: str = re.search(r"window = Window\([^)]*\)", lines).group()
 modified_code: str = f"""
     {window_line}
-    from keyboard import send
     default_theme = theme()
-    themes = [default_theme, 'Black', 'DarkTanBlue', 'GrayGrayGray', 'DarkRed1', 'Reds', 'DarkGrey12', 
-              'DarkBlue12', 'Topanga', 'SystemDefaultForReal', 'NeonGreen1']
+    themes = [default_theme, 'Black', 'GrayGrayGray', 'DarkRed1', 'Reds', 'DarkGrey12', 
+              'DarkBlue12', 'Topanga', 'SystemDefault', 'NeonGreen1']
 
     def _reskin_job():
         new = themes.pop()
@@ -40,12 +43,12 @@ modified_code: str = f"""
     started = False
     window.finalize()
     window.read(10)
-    send(SHORTCUT)
+    press(SHORTCUT)
     window.read(20)
     while True:
         e, v = window.read(timeout=2000)
         if len(themes) == 0:
-            send(SHORTCUT)
+            press(SHORTCUT)
             break
 
         if (e in (None, 'Exit')):
@@ -58,7 +61,10 @@ modified_code: str = f"""
 
     # % END DEMO % #
     # return
-"""
+""".replace(
+    "\\n", "\n"
+)
+print(modified_code)
 newlines = re.sub(r"\\n    window = Window\([^)]*\).*", modified_code, lines).replace(
     "\\n", "\n"
 )
