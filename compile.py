@@ -107,10 +107,10 @@ def bumpver(major: bool = True, minor: bool = False, patch: bool = False):
     run(f"bumpver update --{target}")
 
 
-def git_commit(message: str = f"New commit at {datetime.now()}"):
+def git_push():
     print("Staging commit...")
-    run(f'git commit -m "{message}" -a')
-    print("Commit completed successfully.")
+    run(f"git push")
+    print("Push completed successfully.")
 
 
 def build():
@@ -118,13 +118,7 @@ def build():
     Builds the project.
     """
     print("Building...")
-    run(
-        f"python "
-        f"-m "
-        f"build "
-        # f"-n "
-        f"--outdir=./{DEFAULT_OUTPUT_DIR}/"
-    )
+    run(f"python -m build -n --outdir=./{DEFAULT_OUTPUT_DIR}/")
 
 
 def upload_testpypi(version: str = VERSION):
@@ -164,10 +158,10 @@ def update_copyright_year(filepath: str):
 
 # The following lines are the main controls to this script. Comment and uncomment as desired, but do not change the order.
 
-update_demo()
-bumpver()
+# update_demo()
+# bumpver()
 # format_source_files()
-# build()
-# git_commit()
+build()
+git_push()
 # upload_legacy()
 print("compile.py has completed execution.")
