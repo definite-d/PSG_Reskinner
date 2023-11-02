@@ -25,7 +25,11 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-from .psg_reskinner import main
+from .exception import ReskinnerException
+from .version import __deprecation_condition__
 
-# ENTRY POINT
-main()
+
+def deprecation_trigger():
+    if __deprecation_condition__:
+        m = "Hello! Annoying little reminder to remove the deprecated functions, and this message."
+        raise ReskinnerException(m)

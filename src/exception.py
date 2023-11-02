@@ -25,7 +25,13 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-from .psg_reskinner import main
 
-# ENTRY POINT
-main()
+class ReskinnerException(Exception):
+    def __init__(self, message):
+        """
+        Basic Exception class.
+
+        First available from v2.2.0.
+        :param message:
+        """
+        super().__init__(message)

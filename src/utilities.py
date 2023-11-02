@@ -25,7 +25,18 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-from .psg_reskinner import main
+from functools import cache
 
-# ENTRY POINT
-main()
+
+@cache
+def _lower_class_name(_object):
+    return type(_object).__name__.lower()
+
+
+def transprint(object, **kwargs):
+    print(object, **kwargs)
+    return object
+
+
+def clamp(v: float):
+    return min(max(v, 0), 1)

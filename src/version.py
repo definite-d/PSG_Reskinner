@@ -25,7 +25,5 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-from .psg_reskinner import main
-
-# ENTRY POINT
-main()
+__version__: str = "3.0.0"
+__deprecation_condition__: bool = int(__version__.split(".")[1]) >= 1
