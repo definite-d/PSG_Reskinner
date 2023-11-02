@@ -1,8 +1,8 @@
 .env
+.history
 .idea
 .mypy_cache
 __pycache__
-access_token.txt
 build
+dist
 psg_reskinner.egg-info
-res/__init__.py

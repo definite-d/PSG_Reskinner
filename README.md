@@ -18,37 +18,63 @@ pip install PSG-Reskinner
 
 ## What's Reskinner?
 
-Reskinner is a Python 3 plugin for PySimpleGUI's Tkinter port which enables changing the theme of a PySimpleGUI window on the fly without the need for re-instantiating the window.
+Reskinner is a Python 3 plugin for PySimpleGUI's Tkinter port which enables changing the theme of a PySimpleGUI window
+on the fly without the need for re-instantiating the window.
 
 Please consider starring the project if you find it useful.
 
 ## Example Usage (Demo)
 
 ```python
-# Reskinner Version 2.3.13
-from psg_reskinner import animated_reskin, __version__
-from PySimpleGUI import Window, Text, Button, Push, Titlebar, theme, theme_list, LOOK_AND_FEEL_TABLE
+# Reskinner Version 3.0.0
+from psg_reskinner import animated_reskin, reskin, __version__
 from random import choice as rc
 
-right_click_menu = ['', [['Hi', ['Next Level', ['Deeper Level', ['a', 'b', 'c']], 'Hoho']], 'There']]
+from PySimpleGUI import (
+    LOOK_AND_FEEL_TABLE,
+    Button,
+    Push,
+    Text,
+    Titlebar,
+    Window,
+    theme,
+    theme_list,
+)
 
-window_layout = [
-    [Titlebar('Reskinner Demo')],
-    [Text('Hello!', font=('Helvetica', 20))],
-    [Text('You are currently running Reskinner instead of importing it.')],
-    [Text('The theme of this window changes every 2 seconds.')],
-    [Text('Changing to:')],
-    [Button('DarkBlue3', k='current_theme', font=('Helvetica', 16), right_click_menu=right_click_menu)],
-    [Text(f'Reskinner v{__version__}', font=('Helvetica', 8), pad=(0, 0)), Push()],
+right_click_menu = [
+    "",
+    [["Hi", ["Next Level", ["Deeper Level", ["a", "b", "c"]], "Hoho"]], "There"],
 ]
 
-window = Window('Reskinner Demo', window_layout, element_justification='center', keep_on_top=True)
+window_layout = [
+    [Titlebar("Reskinner Demo")],
+    [Text("Hello!", font=("Helvetica", 20))],
+    [Text("You are currently running the Reskinner demo.")],
+    [Text("The theme of this window changes every 2 seconds.")],
+    [Text("Changing to:")],
+    [
+        Button(
+            "DarkBlue3",
+            k="current_theme",
+            font=("Helvetica", 16),
+            right_click_menu=right_click_menu,
+        )
+    ],
+    [Text(f"Reskinner v{__version__}", font=("Helvetica", 8), pad=(0, 0)), Push()],
+]
+
+window = Window(
+    "Reskinner Demo",
+    window_layout,
+    element_justification="center",
+    keep_on_top=True,
+)
 
 def _reskin_job():
     themes = theme_list()
     themes.remove(theme())
     new = rc(themes)
-    window['current_theme'].update(new)
+    window["current_theme"].update(new)
     animated_reskin(
         window=window,
         new_theme=new,
@@ -60,10 +86,9 @@ def _reskin_job():
 started = False
 
 while True:
-
     e, v = window.read(timeout=2000)
 
-    if e in (None, 'Exit'):
+    if e in (None, "Exit"):
         window.Close()
         break
 
@@ -75,21 +100,27 @@ while True:
 
 ## How does it work?
 
-Reskinner runs through each element in a window, then by relying on the `element.widget` interface to access the underlying Tkinter object, it applies style changes to the window.
+Reskinner runs through each element in a window, then by relying on the `element.widget`
+interface to access the underlying Tkinter object, it applies style changes to the window.
 
 ## What's the story behind psg_reskinner?
-Like [Unda](https://github.com/definite-d/unda), I created Reskinner to be a part/feature of a desktop application which I'm developing, however, I decided to open-source it, as I imagined other developers would find such functionality useful in their projects as well.
+
+Like [Unda](https://github.com/definite-d/unda), I created Reskinner to be a part/feature of a desktop application which
+I'm developing, however, I decided to open-source it, as I imagined other developers would find such functionality
+useful in their projects as well.
 
 Development began on Monday 15th August 2022.
 
 ## Why is it called Reskinner?
+
 I didn't want it to go against the built-in conventions of `theme` and `look_and_feel` that PySimpleGUI has.
 
 ## Standards
+
 Reskinner is:
 
- - [X] built using Python 3.7 (in PyCharm),
+- [X] built using Python 3.7 (in PyCharm),
 
- - [X] fully PEP-8 compliant,
+- [X] fully PEP-8 compliant,
 
- - [X] distributed under the OSI-Approved MIT License.
+- [X] distributed under the OSI-Approved MIT License.
