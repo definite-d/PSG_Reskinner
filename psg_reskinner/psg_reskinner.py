@@ -55,6 +55,7 @@ from .constants import (
     WINDOW_THEME_MAP,
 )
 from .deprecation import deprecation_trigger
+from .easings import EASE_CONSTANT
 from .utilities import _lower_class_name
 from .version import __version__
 
@@ -113,7 +114,6 @@ def reskin(
         cp: ColorProcessor = kwargs.get("_color_processor")
         old_theme = kwargs.get("_old_theme")
         new_theme = kwargs.get("_new_theme")
-        styler = cp.styler
         old_theme_dict = cp.old_theme_dict
         new_theme_dict = cp.new_theme_dict
 
@@ -155,9 +155,9 @@ def reskin(
 
         # TTK Scrollbars
         if getattr(element, "vsb_style_name", False):
-            cp.scrollbar(element.vsb_style_name, "Vertical.TScrollbar")
+            cp.scrollbar(element.vsb_style_name, "Vertical.TScrollbar")  # noqa
         if getattr(element, "hsb_style_name", False):
-            cp.scrollbar(element.hsb_style_name, "Horizontal.TScrollbar")
+            cp.scrollbar(element.hsb_style_name, "Horizontal.TScrollbar")  # noqa
         if getattr(
             element, "ttk_style_name", False
         ) and element.ttk_style_name.endswith("TScrollbar"):
@@ -238,7 +238,7 @@ def reskin(
                 },
             )
             if getattr(element, "TKMenu", False):
-                cp.recurse_menu(element.TKMenu)
+                cp.recurse_menu(element.TKMenu)  # noqa
             continue
 
         elif el == "canvas":
@@ -395,7 +395,31 @@ def animated_reskin(
     interpolation_mode: Union[
         RGB_INTERPOLATION, HUE_INTERPOLATION, HSL_INTERPOLATION
     ] = RGB_INTERPOLATION,
+    easing_function: Callable[[float], float] = EASE_CONSTANT,
 ):
+    """
+    Does the same as a regular reskin, but animates the effect over time.
+
+    First available from v2.2.0.
+    The `interpolation_mode` argument was added in v2.3.4.
+    The `easing_function` argument was added in v3.1.0.
+
+    :param duration_in_milliseconds: The duration of the animation in milliseconds.
+    :param interpolation_mode: Determines how interpolation is to be handled. May be `RGB_INTERPOLATION`,
+        `HUE_INTERPOLATION`, or `HSL_INTERPOLATION`.
+    :param easing_function: A callable acting as an easing function. Other available modes are prefixed with `EASE`.
+
+    :param window: The window to operate on.
+    :param new_theme: The theme to transition to.
+    :param theme_function: The theme change function from PySimpleGUI within your code. Required because of namespaces.
+    :param lf_table: The LOOK_AND_FEEL_TABLE from PySimpleGUI from within your code. The `new_theme` should be in there.
+    :param set_future: If set to True, the `new_theme` will be applied to all future windows.
+    :param element_filter: A callable of your choice that takes an element as its only parameter and returns True or
+        False. Elements that result in True will be reskinned, and others will be skipped.
+    :param reskin_background: If True, the background color of the window will be reskinned. Else, it won't.
+
+    :return:
+    """
     delta = timedelta(milliseconds=duration_in_milliseconds)
     start_time = datetime.now()
     end_time = start_time + delta
@@ -421,7 +445,7 @@ def animated_reskin(
         old_theme_dict, new_theme_dict, styler, 0, interpolation_mode
     )
     while datetime.now() <= end_time:
-        cp.progress = round((datetime.now() - start_time) / delta, 4)
+        cp.progress = easing_function(round((datetime.now() - start_time) / delta, 4))
         try:
             reskin(
                 window,
@@ -492,7 +516,13 @@ def main():
 
     right_click_menu = [
         "",
-        [["Hi", ["Next Level", ["Deeper Level", ["a", "b", "c"]], "Hoho"]], "There"],
+        [
+            [
+                "Hi",
+                ["Next Level", ["Deeper Level", "---", "as", ["a", "b", "c"]], "Hoho"],
+            ],
+            "There",
+        ],
     ]
 
     window_layout = [

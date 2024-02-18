@@ -6,9 +6,11 @@ import PySimpleGUI as sg
 # rs = import_by_file("psg_reskinner", "..")
 import psg_reskinner as rs
 
+use_divider: bool = True
+
 
 def all_elements_demo():
-    sg.theme("SystemDefaultForReal")
+    sg.theme("Topanga")
     use_custom_titlebar = True if sg.running_trinket() else False
 
     NAME_SIZE = 23
@@ -156,7 +158,7 @@ def all_elements_demo():
     # Note - LOCAL Menu element is used (see about for how that's defined)
     menudef = [
         ["File", ["Exit"]],
-        ["Edit", ["Edit Me"]],
+        ["Edit", ["Edit Me", "---" if use_divider else "adsfasfd", "asdf"]],
     ]
     layout = [
         [Menu(menudef, k="-CUST MENUBAR-", p=0)],
@@ -209,6 +211,7 @@ def all_elements_demo():
             break
 
         if event == "-COMBO-":
+            # rs.reskin(
             rs.animated_reskin(
                 window,
                 values["-COMBO-"],

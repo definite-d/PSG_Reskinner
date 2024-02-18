@@ -419,6 +419,12 @@ class ColorProcessor:
         index: int,
         configs: Dict[str, Union[str, Tuple[str, int]]],
     ):
+        configs = dict(
+            filter(
+                lambda item: item[0] in menu.entryconfigure(index).keys(),
+                configs.items(),
+            )
+        )  # Filter the configs for menu entries that don't accept the full config dict. Fixes issue #11.
         self.config(
             configs,
             lambda **cnf: menu.entryconfigure(index, cnf),
