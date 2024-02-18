@@ -25,7 +25,7 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-from math import cos, sin, pi, sqrt, pow
+from math import cos, pi, pow, sin, sqrt
 
 # Easing functions adapted from https://easings.net
 

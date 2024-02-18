@@ -32,6 +32,7 @@ from tkinter import Widget
 from tkinter.ttk import Style
 from typing import Any, Callable, Dict, Tuple, Union
 
+from colour import Color
 from PySimpleGUI import (
     COLOR_SYSTEM_DEFAULT,
     DEFAULT_PROGRESS_BAR_COMPUTE,
@@ -48,7 +49,6 @@ from PySimpleGUI import (
     rgb,
 )
 from PySimpleGUI.PySimpleGUI import _hex_to_hsl, _hsl_to_rgb  # noqa
-from colour import Color
 
 from .constants import (
     HSL_INTERPOLATION,

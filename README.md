@@ -26,7 +26,7 @@ Please consider starring the project if you find it useful.
 ## Example Usage (Demo)
 
 ```python
-# Reskinner Version 3.0.0
+# Reskinner Version 3.1.0
 from psg_reskinner import animated_reskin, reskin, __version__
 from random import choice as rc
 
@@ -43,7 +43,13 @@ from PySimpleGUI import (
 
 right_click_menu = [
     "",
-    [["Hi", ["Next Level", ["Deeper Level", ["a", "b", "c"]], "Hoho"]], "There"],
+    [
+        [
+            "Hi",
+            ["Next Level", ["Deeper Level", "---", "as", ["a", "b", "c"]], "Hoho"],
+        ],
+        "There",
+    ],
 ]
 
 window_layout = [
@@ -70,6 +76,7 @@ window = Window(
     keep_on_top=True,
 )
 
+
 def _reskin_job():
     themes = theme_list()
     themes.remove(theme())
@@ -82,6 +89,7 @@ def _reskin_job():
         lf_table=LOOK_AND_FEEL_TABLE,
     )
     window.TKroot.after(2000, _reskin_job)
+
 
 started = False
 

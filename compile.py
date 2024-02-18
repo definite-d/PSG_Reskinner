@@ -96,7 +96,7 @@ def format_source_files():
         run_formatting(file_)
 
 
-def bumpver(major: bool = True, minor: bool = False, patch: bool = False):
+def bumpver(major: bool = False, minor: bool = True, patch: bool = False):
     """
     Internal use only.
 
@@ -161,7 +161,7 @@ def update_copyright_year(filepath: str):
 # The following lines are the main controls to this script. Comment and uncomment as desired, but do not change the order.
 
 # update_demo()
-# bumpver()
+bumpver()
 # format_source_files()
 # build()
 # git_push()
