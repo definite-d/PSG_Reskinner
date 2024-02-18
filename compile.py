@@ -161,7 +161,7 @@ def update_copyright_year(filepath: str):
 # The following lines are the main controls to this script. Comment and uncomment as desired, but do not change the order.
 
 # update_demo()
-bumpver()
+# bumpver()
 # format_source_files()
 # build()
 # git_push()
