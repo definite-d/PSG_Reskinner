@@ -151,7 +151,7 @@ reskin(
 
 ### Using a named easing function
 
-This uses one of Reskinner’s built-in easing functions (based on [https://easing.net](https://easing.net)) for a smooth, natural animation.
+This uses one of Reskinner’s built-in easing functions (based on [https://easings.net](https://easings.net) [[repo](https://github.com/ai/easings.net)]) for a smooth, natural animation.
 
 ```python
 from reskinner import reskin
